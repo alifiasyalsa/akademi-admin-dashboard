@@ -29,7 +29,7 @@ export function SearchableSelect({
     if (isOpen) {
       setSearch("");
       window.setTimeout(() => {
-        inputRef.current?.focus();
+        inputRef.current?.focus({ preventScroll: true });
       }, 50);
     }
   }, [isOpen]);
@@ -60,7 +60,11 @@ export function SearchableSelect({
   const isPrimary = variant === "primary";
 
   return (
-    <div className={`relative ${minWidth}`} ref={dropdownRef} onKeyDown={handleKeyDown}>
+    <div
+      className={`relative ${minWidth} ${isOpen ? "z-30" : "z-auto"}`}
+      ref={dropdownRef}
+      onKeyDown={handleKeyDown}
+    >
       {/* Trigger Button */}
       <button
         type="button"
@@ -84,9 +88,9 @@ export function SearchableSelect({
       {/* Popover Dropdown dengan Search Bar */}
       {isOpen && (
         <div
-          className={`absolute ${
+          className={`absolute top-full ${
             align === "right" ? "right-0" : "left-0"
-          } mt-1.5 w-full sm:min-w-[280px] md:min-w-[340px] max-w-[calc(100vw-32px)] sm:max-w-[420px] bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
+          } mt-1.5 w-full sm:min-w-[280px] md:min-w-[340px] max-w-[calc(100vw-32px)] sm:max-w-[420px] bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
         >
           {/* Input Pencarian */}
           <div className="p-2 border-b border-slate-100 bg-slate-50">

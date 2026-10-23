@@ -42,7 +42,7 @@ export function GlobalFilterBar({
           </div>
         </div>
 
-        <div className="flex flex-nowrap items-center gap-2 p-1.5 rounded-xl bg-slate-50 border border-slate-200 shrink-0 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-xl bg-slate-50 border border-slate-200 shrink-0">
           {/* Batch Selector (Aktif di kedua tab) */}
           <SearchableSelect
             options={filters.batches}
