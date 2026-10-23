@@ -77,3 +77,23 @@ export function formatDateDisplay(dateVal) {
     return String(dateVal);
   }
 }
+
+/**
+ * Format tanggal + jam Indonesia untuk histori follow-up (mis: "16 Okt 2026, 09.30")
+ */
+export function formatDateTimeDisplay(dateVal) {
+  if (!dateVal) return "-";
+  try {
+    const d = typeof dateVal === "number" ? new Date(dateVal) : new Date(String(dateVal));
+    if (isNaN(d.getTime())) return String(dateVal);
+    return d.toLocaleString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return String(dateVal);
+  }
+}

@@ -4,8 +4,28 @@ import {
   formatPhoneDisplay,
   getInitials,
   normalizeName,
+  formatDateTimeDisplay,
 } from "./formatters.js";
-import { reminderTrackingService, makeTrackingKey } from "./reminderTrackingService.js";
+import { reminderTrackingService, makeTrackingKey, formatRelativeDays } from "./reminderTrackingService.js";
+
+function buildLastFollowup(logRecord) {
+  const at = logRecord?.last_reminded_at || null;
+  if (!at) {
+    return {
+      at: null,
+      dateLabel: "Belum",
+      relativeLabel: "",
+      count: 0,
+    };
+  }
+
+  return {
+    at,
+    dateLabel: formatDateTimeDisplay(at),
+    relativeLabel: formatRelativeDays(at),
+    count: logRecord?.reminder_count || 0,
+  };
+}
 
 /**
  * Workbench Normalizer & Aggregator Service
@@ -361,6 +381,8 @@ export function buildWorkbenchViewModel({
       validAmount: formatRupiah(validInfaqAmount),
       validNote,
       validTone,
+      lastPresensiRemind: buildLastFollowup(presensiLog),
+      lastInfaqRemind: buildLastFollowup(infaqLog),
       actions,
     });
   }

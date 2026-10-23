@@ -46,6 +46,30 @@ const VALID_AMOUNT = {
   advance: "block font-bold text-slate-900",
 };
 
+function LastFollowupLine({ label, followup }) {
+  const hasDate = Boolean(followup?.at);
+  return (
+    <div className="flex items-baseline gap-2 min-w-[11rem]">
+      <span className="font-label-sm text-label-sm uppercase tracking-wider text-slate-400 w-14 shrink-0">
+        {label}
+      </span>
+      {hasDate ? (
+        <span className="min-w-0">
+          <span className="block font-body-sm text-body-sm font-semibold tabular-nums text-slate-800 leading-tight">
+            {followup.dateLabel}
+          </span>
+          <span className="block font-label-sm text-label-sm text-slate-500 leading-tight">
+            {followup.relativeLabel}
+            {followup.count > 0 ? ` · ${followup.count}x` : ""}
+          </span>
+        </span>
+      ) : (
+        <span className="font-body-sm text-body-sm text-slate-400 italic">Belum</span>
+      )}
+    </div>
+  );
+}
+
 function PresenceBadge({ presence }) {
   const tone = PRESENCE_BADGE[presence.tone] || PRESENCE_BADGE.hadir;
   return (
@@ -128,7 +152,6 @@ function ActionCell({ student, onSendWa }) {
 }
 
 export function MemberRow({ student, onSendWa }) {
-  console.log(student)
   return (
     <tr className="hover:bg-slate-50 transition-colors duration-150 group border-b border-slate-100">
       <td className="py-space-md px-space-lg">
@@ -176,6 +199,12 @@ export function MemberRow({ student, onSendWa }) {
       <td className="py-space-md px-space-md text-right tabular-nums">
         <span className={VALID_AMOUNT[student.validTone]}>{student.validAmount}</span>
         <span className={VALID_NOTE[student.validTone]}>{student.validNote}</span>
+      </td>
+      <td className="py-space-md px-space-md">
+        <div className="flex flex-col gap-1.5">
+          <LastFollowupLine label="Presensi" followup={student.lastPresensiRemind} />
+          <LastFollowupLine label="Infaq" followup={student.lastInfaqRemind} />
+        </div>
       </td>
       <td className="py-space-md px-space-lg text-right">
         <ActionCell student={student} onSendWa={onSendWa} />

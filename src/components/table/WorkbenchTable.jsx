@@ -107,13 +107,14 @@ export function WorkbenchTable({
               <th className="py-space-md px-space-md font-semibold">Historis (8 Pk)</th>
               <th className="py-space-md px-space-md text-right font-semibold">Kewajiban</th>
               <th className="py-space-md px-space-md text-right font-semibold">Valid Masuk</th>
+              <th className="py-space-md px-space-md font-semibold">Terakhir Follow-up</th>
               <th className="py-space-md px-space-lg text-right font-semibold">Tindakan WA Mandiri</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-800 font-body-md text-body-md">
             {pagedStudents.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 px-4 text-center text-slate-500 font-body-md">
+                <td colSpan={7} className="py-12 px-4 text-center text-slate-500 font-body-md">
                   <MaterialIcon name="person_search" className="text-[36px] text-slate-300 mx-auto mb-2 block" />
                   Belum ada data.
                 </td>

@@ -101,6 +101,13 @@ export const stitchMock = {
         validAmount: "Rp 50.000",
         validNote: "Tertunggak 3 Pekan",
         validTone: "overdue",
+        lastPresensiRemind: { at: null, dateLabel: "Belum", relativeLabel: "", count: 0 },
+        lastInfaqRemind: {
+          at: "2026-10-21T02:30:00.000Z",
+          dateLabel: "21 Okt 2026, 09.30",
+          relativeLabel: "2 hr lalu",
+          count: 2,
+        },
         promoted: { label: "Belum Tersedia", tone: "regular" },
         actions: [
           {
