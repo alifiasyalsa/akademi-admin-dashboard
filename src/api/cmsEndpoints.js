@@ -75,45 +75,52 @@ export const cmsApi = {
   /**
    * 3. DATA KELAS (DATATABLE)
    * GET /v1/classes/datatable?batch=&class_type_id=&draw=1&gender=&limit=100&offset=0&query=&teacher_id=
+   * Default mengambil semua halaman (batch bisa punya > 100 kelas); `fetchAll: false` untuk 1 halaman saja.
    */
   async getClasses(params = {}) {
-    const query = new URLSearchParams({
-      draw: "1",
-      limit: String(params.limit || 100),
-      offset: String(params.offset || 0),
-      batch: params.batch ? String(params.batch) : "",
-      class_type_id: params.class_type_id ? String(params.class_type_id) : "",
-      gender: params.gender || "",
-      query: params.query || "",
-      teacher_id: params.teacher_id ? String(params.teacher_id) : "",
-    });
+    const fetchPage = async (offset, limit) => {
+      const query = new URLSearchParams({
+        draw: "1",
+        limit: String(limit),
+        offset: String(offset),
+        batch: params.batch ? String(params.batch) : "",
+        class_type_id: params.class_type_id ? String(params.class_type_id) : "",
+        gender: params.gender || "",
+        query: params.query || "",
+        teacher_id: params.teacher_id ? String(params.teacher_id) : "",
+      });
+      return await apiClient(`/classes/datatable?${query.toString()}`);
+    };
 
-    const res = await apiClient(`/classes/datatable?${query.toString()}`);
+    const res = await fetchAllPages(fetchPage, {
+      offset: params.offset || 0,
+      pageSize: Number(params.limit) || 100,
+      fetchAll: params.fetchAll,
+    });
     return {
-      total: res?.recordsTotal || 0,
-      filtered: res?.recordsFiltered || 0,
-      data: res?.data || [],
+      total: res.recordsTotal || 0,
+      filtered: res.total || 0,
+      data: res.data,
     };
   },
 
   /**
-   * 4. JADWAL KELAS KESELURUHAN
-   * GET /v1/classes/schedule?batch=&class_type_id=&draw=1&gender=&limit=100&offset=0&query=&teacher_id=
+   * 4. JADWAL KELAS KESELURUHAN (per pertemuan)
+   * GET /v1/classes/schedule?start=YYYY-MM-DD&end=YYYY-MM-DD
+   * `start` & `end` wajib. Server mengabaikan filter batch dan mengembalikan semua pertemuan
+   * dalam rentang tanggal (tanpa paginasi), jadi penyaringan batch dilakukan di jadwalService.
    */
-  async getClassesSchedule(params = {}) {
-    const query = new URLSearchParams({
-      draw: "1",
-      limit: String(params.limit || 100),
-      offset: String(params.offset || 0),
-      batch: params.batch ? String(params.batch) : "",
-      class_type_id: params.class_type_id ? String(params.class_type_id) : "",
-      gender: params.gender || "",
-      query: params.query || "",
-      teacher_id: params.teacher_id ? String(params.teacher_id) : "",
-    });
-
-    const res = await apiClient(`/classes/schedule?${query.toString()}`);
-    return res?.data || [];
+  async getClassesSchedule({ start, end, force = false } = {}) {
+    if (!start || !end) return [];
+    return cached(
+      `schedule:${start}:${end}`,
+      async () => {
+        const query = new URLSearchParams({ start, end });
+        const res = await apiClient(`/classes/schedule?${query.toString()}`);
+        return Array.isArray(res?.data) ? res.data : [];
+      },
+      { force }
+    );
   },
 
   /**
@@ -188,6 +195,11 @@ export const cmsApi = {
    * GET /v1/classes/attendance/weekly?batch_id=&class_id=&week_num=&limit=500&offset=0&data_type=admin
    */
   async getWeeklyAttendance(params = {}) {
+    const key = `weekly:${params.batch_id || ""}:${params.class_id || ""}:${params.week_num ?? 1}:${params.class_type_id || ""}:${params.gender || ""}:${params.query || ""}:${params.limit || 500}:${params.offset || 0}`;
+    return cached(key, () => this._fetchWeeklyAttendance(params), { force: params.force });
+  },
+
+  async _fetchWeeklyAttendance(params = {}) {
     const query = new URLSearchParams({
       batch_id: params.batch_id ? String(params.batch_id) : "",
       class_id: params.class_id ? String(params.class_id) : "",
@@ -282,6 +294,23 @@ export const cmsApi = {
       recordsTotal,
       data,
     };
+  },
+
+  /**
+   * 9b. ANGGOTA KELAS (ROSTER)
+   * GET /v1/classes/{class_id}/members → [{ id, fullname, nickname, gender, email, phone }]
+   * Sumber utama daftar santri Workbench: tetap terisi walaupun presensi pekan belum diinput.
+   */
+  async getClassMembers(classId, { force = false } = {}) {
+    if (!classId) return [];
+    return cached(
+      `classMembers:${classId}`,
+      async () => {
+        const res = await apiClient(`/classes/${classId}/members`);
+        return Array.isArray(res?.data) ? res.data : [];
+      },
+      { force }
+    );
   },
 
   /**

@@ -19,7 +19,7 @@ export function TableToolbar({
               type="button"
               className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 isActive
-                  ? "bg-[#0284c7] text-white shadow-xs"
+                  ? "bg-[#FDD6E5] text-slate-900 shadow-xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
               }`}
               onClick={() => onTabChange(tab.id)}
@@ -30,7 +30,7 @@ export function TableToolbar({
                   {tab.count}
                 </span>
               ) : (
-                <span className={`px-1.5 py-0.2 rounded-full text-[11px] ${isActive ? "bg-white/20 text-white font-semibold" : "font-medium text-slate-500"}`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[11px] ${isActive ? "bg-white/60 text-slate-900 font-semibold" : "font-medium text-slate-500"}`}>
                   {tab.count}
                 </span>
               )}

@@ -4,6 +4,7 @@ const PRESENCE_DOT = {
   hadir: "bg-[#0284c7]",
   tidakHadir: "bg-amber-400",
   belumBerjalan: "bg-slate-200 border border-slate-300",
+  belumDiisi: "bg-white border border-dashed border-slate-400",
   absen: "bg-amber-400",
   sakit: "bg-amber-400",
   izin: "bg-sky-400",
@@ -29,6 +30,10 @@ const PRESENCE_BADGE = {
   belumBerjalan: {
     wrap: "bg-slate-50 text-slate-600 border-slate-200",
     dot: "bg-slate-400",
+  },
+  belumDiisi: {
+    wrap: "bg-white text-slate-500 border-dashed border-slate-300",
+    dot: "bg-slate-300",
   },
 };
 
@@ -162,11 +167,26 @@ export function MemberRow({ student, onSendWa }) {
           <div>
             <p className="font-headline-sm text-headline-sm font-semibold leading-tight text-slate-900">{student.name}</p>
             <p className="font-body-sm text-body-sm font-mono text-slate-500">{student.phoneDisplay}</p>
+            {student.email && (
+              <p className="font-label-sm text-label-sm text-slate-400 truncate max-w-[14rem]" title={student.email}>
+                {student.email}
+              </p>
+            )}
           </div>
         </div>
       </td>
       <td className="py-space-md px-space-md">
         <PresenceBadge presence={student.presence} />
+      </td>
+      <td className="py-space-md px-space-md">
+        <p className="font-body-sm text-body-sm font-semibold text-slate-800 whitespace-nowrap">
+          {student.classDay || "-"}
+        </p>
+        {student.className && (
+          <p className="font-label-sm text-label-sm text-slate-400 truncate max-w-[10rem]" title={student.className}>
+            {student.className}
+          </p>
+        )}
       </td>
       <td className="py-space-md px-space-md">
         <div className="flex items-center gap-1.5" title={student.history?.title}>
@@ -182,6 +202,8 @@ export function MemberRow({ student, onSendWa }) {
                     ? "Hadir"
                     : dot === "belumBerjalan"
                     ? "Belum Berjalan"
+                    : dot === "belumDiisi"
+                    ? "Belum Diisi"
                     : "Tidak Hadir"
                 }`}
               />

@@ -1,11 +1,14 @@
 import { MaterialIcon } from "../MaterialIcon.jsx";
 import { SearchableSelect } from "./SearchableSelect.jsx";
+import { ChecklistSelect } from "./ChecklistSelect.jsx";
+import { DAYS } from "../../services/jadwalService.js";
 
 export function GlobalFilterBar({
   filters,
   selection,
   onSelectionChange,
   activeMainTab = "monitoring",
+  dayFilter = null,
 }) {
   const isRegistrasi = activeMainTab === "registrasi";
 
@@ -43,42 +46,30 @@ export function GlobalFilterBar({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-xl bg-slate-50 border border-slate-200 shrink-0">
-          {/* Batch Selector (Aktif di kedua tab) */}
-          <SearchableSelect
-            options={filters.batches}
-            value={selection.batchId}
-            onChange={(newBatchId) =>
-              onSelectionChange({ ...selection, batchId: newBatchId })
-            }
-            placeholder="Pilih Batch..."
-            searchPlaceholder="Ketik nomor/nama batch..."
-            minWidth="min-w-[170px]"
-          />
-
-          <div className="h-5 w-[1px] hidden sm:block bg-slate-300" />
-
-          {/* Kelas Selector */}
+          {/* Batch Selector: multi-pilih di Monitoring, tunggal di Registrasi (data registrasi per batch) */}
           {isRegistrasi ? (
-            <div
-              className="hidden md:flex items-center gap-2 opacity-40 cursor-not-allowed bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 select-none"
-              title="Filter kelas dinonaktifkan di tab Registrasi (santri belum memilih kelas)"
-            >
-              <MaterialIcon name="school" className="text-[18px] text-slate-400" />
-              <span className="font-label-sm text-label-sm font-medium text-slate-400">
-                {selectedClassObj?.label || "Tahsin Lanjutan A • Sabtu 08:00"}
-              </span>
-              <MaterialIcon name="lock" className="text-[14px] text-slate-400" />
-            </div>
-          ) : (
             <SearchableSelect
-              options={filters.classes}
-              value={selection.classId}
-              onChange={(newClassId) =>
-                onSelectionChange({ ...selection, classId: newClassId })
+              options={filters.batches}
+              value={selection.batchId}
+              onChange={(newBatchId) =>
+                onSelectionChange({ ...selection, batchId: newBatchId, batchIds: [newBatchId] })
               }
-              placeholder="Pilih Kelas..."
-              searchPlaceholder="Ketik nama/level/gender kelas..."
-              minWidth="min-w-[220px]"
+              placeholder="Pilih Batch..."
+              searchPlaceholder="Ketik nomor/nama batch..."
+              minWidth="min-w-[170px]"
+            />
+          ) : (
+            <ChecklistSelect
+              options={filters.batches}
+              value={selection.batchIds || (selection.batchId ? [selection.batchId] : [])}
+              onChange={(newBatchIds) => onSelectionChange({ ...selection, batchIds: newBatchIds })}
+              allLabel="Semua Batch"
+              placeholder="Pilih Batch..."
+              title="Pilih Batch"
+              unitLabel="Batch"
+              icon="layers"
+              align="left"
+              minWidth="min-w-[170px]"
             />
           )}
 
@@ -105,8 +96,56 @@ export function GlobalFilterBar({
               placeholder="Pilih Pekan..."
               searchPlaceholder="Ketik pekan..."
               variant="primary"
-              align="right"
               minWidth="min-w-[160px]"
+            />
+          )}
+
+          <div className="h-5 w-[1px] hidden sm:block bg-slate-300" />
+
+          {/* Hari Selector (multi-pilih, berdasarkan jadwal pekan terpilih) */}
+          <ChecklistSelect
+            options={DAYS}
+            value={dayFilter?.selectedDays || []}
+            onChange={dayFilter?.onChange || (() => {})}
+            allLabel="Semua Hari"
+            placeholder="Pilih Hari..."
+            title="Pilih Hari"
+            unitLabel="Hari"
+            icon="calendar_month"
+            disabled={isRegistrasi || !dayFilter?.enabled}
+            disabledTitle={
+              isRegistrasi
+                ? "Filter hari dinonaktifkan di tab Registrasi"
+                : "Filter hari aktif setelah data kelas dari CMS termuat"
+            }
+            align="left"
+          />
+
+          <div className="h-5 w-[1px] hidden sm:block bg-slate-300" />
+
+          {/* Kelas Selector (opsional: kelas spesifik di hari terpilih) */}
+          {isRegistrasi ? (
+            <div
+              className="hidden md:flex items-center gap-2 opacity-40 cursor-not-allowed bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 select-none"
+              title="Filter kelas dinonaktifkan di tab Registrasi (santri belum memilih kelas)"
+            >
+              <MaterialIcon name="school" className="text-[18px] text-slate-400" />
+              <span className="font-label-sm text-label-sm font-medium text-slate-400">
+                {selectedClassObj?.label || "Tahsin Lanjutan A • Sabtu 08:00"}
+              </span>
+              <MaterialIcon name="lock" className="text-[14px] text-slate-400" />
+            </div>
+          ) : (
+            <SearchableSelect
+              options={filters.classes}
+              value={selection.classId}
+              onChange={(newClassId) =>
+                onSelectionChange({ ...selection, classId: newClassId })
+              }
+              placeholder="Pilih Kelas..."
+              searchPlaceholder="Ketik nama/hari/level/gender kelas..."
+              align="right"
+              minWidth="min-w-[220px]"
             />
           )}
         </div>

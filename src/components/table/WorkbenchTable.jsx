@@ -77,6 +77,12 @@ export function WorkbenchTable({
           <p className="text-xs text-slate-500 mt-0.5">
             Daftar santri, historis presensi 8 pekan, status validasi infaq, dan tindakan WA
           </p>
+          {table.notice && (
+            <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+              <MaterialIcon name="warning" className="text-[14px]" />
+              {table.notice}
+            </p>
+          )}
         </div>
 
         <button
@@ -104,6 +110,7 @@ export function WorkbenchTable({
             <tr className="bg-slate-50 text-slate-600 font-label-sm text-label-sm uppercase tracking-wider border-b border-slate-200">
               <th className="py-space-md px-space-lg font-semibold">Nama & Kontak</th>
               <th className="py-space-md px-space-md font-semibold">Presensi Pekan {weekLabel}</th>
+              <th className="py-space-md px-space-md font-semibold">Hari</th>
               <th className="py-space-md px-space-md font-semibold">Historis (8 Pk)</th>
               <th className="py-space-md px-space-md text-right font-semibold">Kewajiban</th>
               <th className="py-space-md px-space-md text-right font-semibold">Valid Masuk</th>
@@ -114,14 +121,14 @@ export function WorkbenchTable({
           <tbody className="divide-y divide-slate-100 text-slate-800 font-body-md text-body-md">
             {pagedStudents.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 px-4 text-center text-slate-500 font-body-md">
+                <td colSpan={8} className="py-12 px-4 text-center text-slate-500 font-body-md">
                   <MaterialIcon name="person_search" className="text-[36px] text-slate-300 mx-auto mb-2 block" />
                   Belum ada data.
                 </td>
               </tr>
             ) : (
               pagedStudents.map((student) => (
-                <MemberRow key={student.id} student={student} onSendWa={onSendWa} />
+                <MemberRow key={student.rowKey || student.id} student={student} onSendWa={onSendWa} />
               ))
             )}
           </tbody>

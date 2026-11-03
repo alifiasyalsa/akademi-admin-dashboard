@@ -76,6 +76,7 @@ Aplikasi ini adalah **Operational Workbench & CRM** berbasis web untuk tim Admin
     │   └── useWorkbenchData.js      # Hook sentral state: fetch batch, kelas, presensi, agregasi viewModel
     ├── services/
     │   ├── formatters.js            # Utility format rupiah, normalisasi nomor HP, inisial nama, tanggal
+    │   ├── jadwalService.js         # Indeks jadwal per pekan (/classes/schedule) → hari & jam kelas (WIB)
     │   ├── registrasiService.js     # Agregasi & filter view model untuk tab Registrasi
     │   ├── reminderTrackingService.js # Koneksi Supabase REST untuk tabel reminder_logs
     │   ├── templateService.js       # Koneksi Supabase REST untuk tabel message_templates & template interpolation
@@ -86,7 +87,8 @@ Aplikasi ini adalah **Operational Workbench & CRM** berbasis web untuk tim Admin
         ├── feedback/
         │   └── Toast.jsx            # Notifikasi pop-up feedback (kirim WA, sinkronisasi data)
         ├── filters/
-        │   ├── GlobalFilterBar.jsx  # Toolbar filter Batch, Kelas, dan Pekan
+        │   ├── ChecklistSelect.jsx  # Dropdown checklist multi-pilih (filter Batch & Hari)
+        │   ├── GlobalFilterBar.jsx  # Toolbar filter Batch (multi) → Pekan → Hari → Kelas
         │   └── SearchableSelect.jsx # Custom dropdown interaktif dengan fitur pencarian real-time
         ├── guidance/
         │   └── AdminGuidance.jsx    # Card informasi panduan SOP penagihan/follow-up admin
@@ -128,6 +130,8 @@ Agar AI tidak berasumsi salah, berikut status aktual setiap fitur:
 | :--- | :---: | :--- |
 | **Integrasi CMS Live** | ✅ **Aktif** | Berjalan via `cmsEndpoints.js`. Mengambil batch, kelas, kehadiran mingguan, kehadiran 8 pekan, komitmen, dan registrasi. |
 | **Dot Presensi 8 Pekan** | ✅ **Aktif** | Mengonsumsi endpoint `/v1/classes/{classId}/attendance`, dipetakan menjadi dot visual di `MemberRow.jsx`. |
+| **Workbench per Hari (multi-kelas)** | ✅ **Aktif** | Hierarki filter Batch → Pekan → Hari → Kelas. Hari dari `class_time` jadwal `/v1/classes/schedule` (wajib `start`/`end` YYYY-MM-DD; filter batch diabaikan server, disaring di `jadwalService.js`; field pekan = `meeting_num`). Sebagian hari dicentang → opsi "Semua Kelas" menggabungkan presensi semua kelas di hari itu (fetch paralel maks 6, dedup santri lintas kelas) di `useWorkbenchData.js`. |
+| **Daftar Santri dari Roster Kelas** | ✅ **Aktif** | Baris Workbench berasal dari `GET /v1/classes/{id}/members` (roster), bukan presensi mingguan. Presensi pekan ditempelkan per `member_id`; jika belum diinput → status "Belum Diisi" (pertemuan sudah lewat) atau "Belum Berjalan" (belum terjadi), tidak dihitung absen & tidak memicu WA presensi. Infaq tetap tampil dari `/members/commitments`. |
 | **Tracking Pengingat Supabase** | ✅ **Aktif** | Menggunakan REST API Supabase ke tabel `reminder_logs` melalui `reminderTrackingService.js`. |
 | **Kustomisasi Template WA** | ✅ **Aktif** | Modal `MessageTemplateModal.jsx` terhubung ke tabel `message_templates` di Supabase dengan fallback lokal. |
 | **Routing & Hosting Vercel** | ✅ **Aktif** | Sukses di-deploy ke Vercel dengan SPA fallback di `vercel.json`. |
@@ -144,6 +148,7 @@ Agar AI tidak berasumsi salah, berikut status aktual setiap fitur:
 | **Mengubah / Menambah Endpoint API CMS** | `src/api/cmsEndpoints.js` | `src/api/client.js` |
 | **Mengubah Token Autentikasi / Refresh Flow** | `src/api/tokenManager.js` | `src/api/client.js`, `.env.local` |
 | **Mengubah Filter Dropdown (Batch, Kelas, Pekan)** | `src/components/filters/GlobalFilterBar.jsx` | `src/hooks/useWorkbenchData.js`, `SearchableSelect.jsx` |
+| **Mengubah Filter Batch/Hari / Agregasi Multi-Kelas** | `src/hooks/useWorkbenchData.js` | `src/services/jadwalService.js`, `workbenchService.js`, `ChecklistSelect.jsx` |
 | **Mengubah Logika & Rumus Infaq / Presensi** | `src/services/workbenchService.js` | `src/services/formatters.js` |
 | **Mengubah Baris Tabel Monitoring & Tombol WA** | `src/components/table/MemberRow.jsx` | `src/services/waService.js`, `WorkbenchTable.jsx` |
 | **Mengubah Baris Tabel Registrasi & Konfirmasi WA**| `src/components/registrasi/RegistrasiRow.jsx` | `ReminderConfirmModal.jsx`, `RegistrasiTable.jsx` |

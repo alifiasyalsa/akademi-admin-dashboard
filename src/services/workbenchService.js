@@ -7,6 +7,7 @@ import {
   formatDateTimeDisplay,
 } from "./formatters.js";
 import { reminderTrackingService, makeTrackingKey, formatRelativeDays } from "./reminderTrackingService.js";
+import { getClassWeekSchedule, getWeekStartDates } from "./jadwalService.js";
 
 function buildLastFollowup(logRecord) {
   const at = logRecord?.last_reminded_at || null;
@@ -43,9 +44,24 @@ export function buildWorkbenchViewModel({
   classAttendance = null,
   teacherSchedule = [],
   reminderLogsMap = null,
+  // Mode gabungan per hari: [{ cls, attendanceList, classAttendance }]
+  classGroups = null,
+  selectedClassId = null,
+  extraClassOptions = [],
+  scheduleIndex = null,
+  notice = null,
 }) {
   const currentWeek = Number(selectedWeekNum) || 1;
-  const numMeetings = selectedClass?.num_of_meetings || 8;
+  const groups = (classGroups || [{ cls: selectedClass, attendanceList, classAttendance }]).map((group) => ({
+    cls: group.cls,
+    roster: Array.isArray(group.roster) ? group.roster : null,
+    attendanceList: group.attendanceList || [],
+    meetings: group.classAttendance?.attendance_list || group.classAttendance?.data?.attendance_list || [],
+    schedule: getClassWeekSchedule(scheduleIndex, group.cls, currentWeek),
+    batchNo: String(group.cls?.batch ?? selectedBatch ?? ""),
+  }));
+  const numMeetings = Math.max(0, ...groups.map((g) => Number(g.cls?.num_of_meetings) || 0)) || 8;
+  const weekStartDates = getWeekStartDates(scheduleIndex);
 
 
   // 1. Siapkan Filter Dropdown Data
@@ -54,10 +70,20 @@ export function buildWorkbenchViewModel({
     label: `Batch ${b.title || b.batch_no}`,
   }));
 
-  const filterClasses = classes.map((c) => ({
-    id: String(c.id),
-    label: `${c.name || "Kelas"} • ${c.gender || ""} • Level ${c.class_type?.name || "-"}`,
-  }));
+  const filterClasses = [
+    ...extraClassOptions,
+    ...classes.map((c) => ({
+      id: String(c.id),
+      label: [
+        c.name || "Kelas",
+        scheduleIndex ? getClassWeekSchedule(scheduleIndex, c, currentWeek)?.label : null,
+        c.gender || "",
+        `Level ${c.class_type?.name || "-"}`,
+      ]
+        .filter(Boolean)
+        .join(" • "),
+    })),
+  ];
 
   // Buat opsi pekan sesuai jadwal kelas / num_of_meetings
   const filterWeeks = [];
@@ -65,8 +91,9 @@ export function buildWorkbenchViewModel({
   for (let i = scheduleCount; i >= 1; i--) {
     const matchedSched = teacherSchedule.find((s) => s.attendance_no === i);
     let schedDateLabel = "";
-    if (matchedSched?.class_time) {
-      const d = new Date(matchedSched.class_time);
+    const schedTime = matchedSched?.class_time || weekStartDates.get(i);
+    if (schedTime) {
+      const d = new Date(schedTime);
       if (!isNaN(d.getTime())) {
         schedDateLabel = ` (${d.toLocaleDateString("id-ID", { day: "numeric", month: "short" })})`;
       }
@@ -78,19 +105,22 @@ export function buildWorkbenchViewModel({
   }
 
   // 2. Buat Hash Index untuk Pencocokan Cepat & Mencegah Duplikasi
-  // Komitmen index: by member_id -> by phone -> by normalized name
+  // Komitmen index: by member_id -> by phone -> by normalized name, dipisah per batch
+  // (santri yang ikut >1 batch punya komitmen berbeda di tiap batch)
+  const byBatch = (batchNo, key) => `${batchNo}|${key}`;
   const commitmentsByMemberId = new Map();
   const commitmentsByPhone = new Map();
   const commitmentsByName = new Map();
   commitmentsList.forEach((c) => {
-    if (c.id) commitmentsByMemberId.set(String(c.id), c);
-    if (c.member_id) commitmentsByMemberId.set(String(c.member_id), c);
+    const batchNo = String(c._batch ?? c.class?.batch ?? selectedBatch ?? "");
+    if (c.id) commitmentsByMemberId.set(byBatch(batchNo, String(c.id)), c);
+    if (c.member_id) commitmentsByMemberId.set(byBatch(batchNo, String(c.member_id)), c);
 
     const phoneKey = normalizePhone(c.phone);
-    if (phoneKey) commitmentsByPhone.set(phoneKey, c);
+    if (phoneKey) commitmentsByPhone.set(byBatch(batchNo, phoneKey), c);
 
     const nameKey = normalizeName(c.fullname || c.name);
-    if (nameKey) commitmentsByName.set(nameKey, c);
+    if (nameKey) commitmentsByName.set(byBatch(batchNo, nameKey), c);
   });
 
   // 3. Normalisasi Data Siswa / Peserta
@@ -100,38 +130,80 @@ export function buildWorkbenchViewModel({
 
   let countHadir = 0;
   let countTidakHadir = 0;
+  let countBelumDiisi = 0;
+  let countBelumBerjalan = 0;
   let totalClassTargetInfaq = 0;
   let totalClassValidInfaq = 0;
   let totalOverdueMembers = 0;
 
-  for (const item of attendanceList) {
+  // Baris santri berasal dari roster kelas (tetap ada walau presensi pekan belum diinput).
+  // Presensi mingguan hanya ditempelkan per member_id. Tanpa roster → fallback ke daftar presensi.
+  const studentItems = groups.flatMap((group) => {
+    if (!group.roster) {
+      return group.attendanceList.map((item) => ({ item, weekly: item, group }));
+    }
+    const weeklyById = new Map(group.attendanceList.map((a) => [String(a.member_id), a]));
+    const rosterIds = new Set(group.roster.map((m) => String(m.id)));
+    const fromRoster = group.roster.map((m) => ({
+      item: { member_id: m.id, member_name: m.fullname || m.nickname, member_phone: m.phone, member_email: m.email },
+      weekly: weeklyById.get(String(m.id)) || null,
+      group,
+    }));
+    const onlyInAttendance = group.attendanceList
+      .filter((a) => !rosterIds.has(String(a.member_id)))
+      .map((a) => ({ item: a, weekly: a, group }));
+    return [...fromRoster, ...onlyInAttendance];
+  });
+
+  const now = Date.now();
+  const isPastMeeting = (meeting, fallbackDate) => {
+    const d = new Date(meeting?.start_date || fallbackDate || NaN);
+    return !isNaN(d.getTime()) && d.getTime() <= now;
+  };
+
+  // Deduplikasi lintas kelas: santri yang terdaftar di >1 kelas hanya muncul sekali (kelas pertama)
+  for (const { item, weekly, group } of studentItems) {
+    const { batchNo } = group;
     const memberId = item.member_id ? String(item.member_id) : "";
     const memberName = item.member_name || "Tanpa Nama";
     const memberPhone = item.member_phone || "";
     const phoneKey = normalizePhone(memberPhone);
     const nameKey = normalizeName(memberName);
 
-    // Kunci unik deduplikasi
+    // Kunci unik deduplikasi (per batch)
     const uniqueKey = memberId || phoneKey || nameKey;
-    if (!uniqueKey || processedMemberKeys.has(uniqueKey)) {
+    const dedupKey = byBatch(batchNo, uniqueKey);
+    if (!uniqueKey || processedMemberKeys.has(dedupKey)) {
       continue;
     }
-    processedMemberKeys.add(uniqueKey);
+    processedMemberKeys.add(dedupKey);
 
     // Matching Komitmen
     const commitmentData =
-      (memberId ? commitmentsByMemberId.get(memberId) : null) ||
-      commitmentsByPhone.get(phoneKey) ||
-      commitmentsByName.get(nameKey) ||
+      (memberId ? commitmentsByMemberId.get(byBatch(batchNo, memberId)) : null) ||
+      commitmentsByPhone.get(byBatch(batchNo, phoneKey)) ||
+      commitmentsByName.get(byBatch(batchNo, nameKey)) ||
       null;
+    const memberEmail = String(item.member_email || commitmentData?.email || "").trim();
 
     // Hitung Presensi Pekan Ini & Histori 8 Pekan dari data class attendance
-    const attendanceMeetings =
-      classAttendance?.attendance_list ||
-      classAttendance?.data?.attendance_list ||
-      [];
+    const attendanceMeetings = group.meetings;
+    const currentMeeting = attendanceMeetings[currentWeek - 1];
 
-    let isAttended = Boolean(item.attend);
+    // Status presensi pekan terpilih. Belum diinput (member_list null & tidak ada di presensi mingguan)
+    // ≠ tidak hadir: tidak dihitung absen dan tidak memicu WA presensi.
+    let isRecorded = false;
+    let isAttended = false;
+    if (currentMeeting && Array.isArray(currentMeeting.member_list)) {
+      isRecorded = true;
+      isAttended = Boolean(memberId) && currentMeeting.member_list.some((id) => String(id) === memberId);
+    } else if (weekly) {
+      isRecorded = true;
+      isAttended = Boolean(weekly.attend);
+    }
+    const isAbsent = isRecorded && !isAttended;
+    const unrecordedLabel = isPastMeeting(currentMeeting, group.schedule?.date) ? "Belum Diisi" : "Belum Berjalan";
+
     let dots = [];
     let historyScore = "";
     let historyTitle = "";
@@ -143,10 +215,15 @@ export function buildWorkbenchViewModel({
 
       attendanceMeetings.forEach((meeting, idx) => {
         const weekIdx = idx + 1;
-        // Kalau member_list null berarti belum berjalan pekannya
+        // member_list null: pertemuan belum berjalan, atau sudah lewat tapi presensi belum diinput
         if (meeting.member_list === null || meeting.member_list === undefined) {
-          dots.push("belumBerjalan");
-          tooltipItems.push(`Pekan ${weekIdx}: Belum Berjalan`);
+          if (isPastMeeting(meeting)) {
+            dots.push("belumDiisi");
+            tooltipItems.push(`Pekan ${weekIdx}: Belum Diisi`);
+          } else {
+            dots.push("belumBerjalan");
+            tooltipItems.push(`Pekan ${weekIdx}: Belum Berjalan`);
+          }
         } else if (Array.isArray(meeting.member_list)) {
           completedWeeksCount++;
           // Cek apakah member_id ada di member_list
@@ -165,25 +242,27 @@ export function buildWorkbenchViewModel({
         }
       });
 
-      // Sinkronisasi status kehadiran pekan aktif jika pertemuan pekan ini sudah tercatat
-      const currentMeeting = attendanceMeetings[currentWeek - 1];
-      if (currentMeeting && Array.isArray(currentMeeting.member_list) && memberId) {
-        isAttended = currentMeeting.member_list.some((id) => String(id) === memberId);
-      }
-
-      historyScore = `${attendedWeeksCount}/${completedWeeksCount || attendanceMeetings.length}`;
+      historyScore = `${attendedWeeksCount}/${completedWeeksCount}`;
       historyTitle = tooltipItems.join(" • ");
-    } else {
+    } else if (isRecorded) {
       // Fallback jika classAttendance belum dimuat
       dots = [isAttended ? "hadir" : "tidakHadir"];
       historyScore = isAttended ? "1/1" : "0/1";
-      historyTitle = `Presensi Pekan ${currentWeek}: ${isAttended ? "Hadir" : "Tidak Hadir"}${item.note ? ` (${item.note})` : ""}`;
+      historyTitle = `Presensi Pekan ${currentWeek}: ${isAttended ? "Hadir" : "Tidak Hadir"}${weekly?.note ? ` (${weekly.note})` : ""}`;
+    } else {
+      dots = [unrecordedLabel === "Belum Diisi" ? "belumDiisi" : "belumBerjalan"];
+      historyScore = "-";
+      historyTitle = `Presensi Pekan ${currentWeek}: ${unrecordedLabel}`;
     }
 
-    const currentMeeting = attendanceMeetings[currentWeek - 1];
     let presenceObj;
-    if (currentMeeting && currentMeeting.member_list === null) {
-      presenceObj = { label: "Belum Berjalan", tone: "belumBerjalan" };
+    if (!isRecorded) {
+      if (unrecordedLabel === "Belum Diisi") countBelumDiisi++;
+      else countBelumBerjalan++;
+      presenceObj = {
+        label: unrecordedLabel,
+        tone: unrecordedLabel === "Belum Diisi" ? "belumDiisi" : "belumBerjalan",
+      };
     } else if (isAttended) {
       countHadir++;
       presenceObj = { label: "Hadir", tone: "hadir" };
@@ -234,14 +313,14 @@ export function buildWorkbenchViewModel({
 
     // 1. Evaluasi Status Pengingat Presensi & Infaq via Supabase Realtime Log
     const targetMemberId = memberId || uniqueKey;
-    const presensiTrackingKey = makeTrackingKey("presensi", targetMemberId, `batch_${selectedBatch}_pekan_${currentWeek}`);
+    const presensiTrackingKey = makeTrackingKey("presensi", targetMemberId, `batch_${batchNo}_pekan_${currentWeek}`);
     const presensiLog = reminderLogsMap?.get?.(presensiTrackingKey);
     const presensiState = reminderTrackingService.computeReminderState({
-      isResolved: isAttended,
+      isResolved: !isAbsent,
       logRecord: presensiLog,
     });
 
-    const infaqTrackingKey = makeTrackingKey("infaq", targetMemberId, `batch_${selectedBatch}`);
+    const infaqTrackingKey = makeTrackingKey("infaq", targetMemberId, `batch_${batchNo}`);
     const infaqLog = reminderLogsMap?.get?.(infaqTrackingKey);
     const infaqState = reminderTrackingService.computeReminderState({
       isResolved: !isOverdue,
@@ -250,8 +329,9 @@ export function buildWorkbenchViewModel({
 
     // Kategorisasi Tab Filter Santri
     const categories = [];
+    categories.push(weeklyCommitment > 0 ? "committed" : "uncommitted");
     if (isOverdue) categories.push("overdue");
-    if (isOverdue || !isAttended) {
+    if (isOverdue || isAbsent) {
       categories.push("attention");
     }
     if (!isOverdue && isAttended) {
@@ -264,13 +344,13 @@ export function buildWorkbenchViewModel({
     }
     if (
       (isOverdue && infaqState.status === "unreminded") ||
-      (!isAttended && presensiState.status === "unreminded")
+      (isAbsent && presensiState.status === "unreminded")
     ) {
       categories.push("unreminded");
     }
     if (
       (isOverdue && infaqState.status === "reminded") ||
-      (!isAttended && presensiState.status === "reminded")
+      (isAbsent && presensiState.status === "reminded")
     ) {
       categories.push("reminded");
     }
@@ -288,7 +368,7 @@ export function buildWorkbenchViewModel({
           label: "Follow-up Infaq (>3 hr)",
           waType: "infaq",
           domain: "infaq",
-          contextId: `batch_${selectedBatch}`,
+          contextId: `batch_${batchNo}`,
           isFollowup: true,
           detail: `Tertunggak ${formatRupiah(targetObligation - validInfaqAmount)} • ${infaqState.relativeTime}`,
           currentCount: infaqState.count,
@@ -301,7 +381,7 @@ export function buildWorkbenchViewModel({
           label: `Diingatkan (${infaqState.relativeTime})`,
           waType: "infaq",
           domain: "infaq",
-          contextId: `batch_${selectedBatch}`,
+          contextId: `batch_${batchNo}`,
           detail: `Tertunggak ${formatRupiah(targetObligation - validInfaqAmount)} • ${infaqState.count}x kirim`,
           currentCount: infaqState.count,
         });
@@ -313,15 +393,15 @@ export function buildWorkbenchViewModel({
           label: "Kirim WA Infaq",
           waType: "infaq",
           domain: "infaq",
-          contextId: `batch_${selectedBatch}`,
+          contextId: `batch_${batchNo}`,
           detail: `Tertunggak ${formatRupiah(targetObligation - validInfaqAmount)}`,
           currentCount: 0,
         });
       }
     }
 
-    // Tombol 2: Presensi Tidak Hadir
-    if (!isAttended) {
+    // Tombol 2: Presensi Tidak Hadir (hanya jika presensi pekan ini sudah diinput)
+    if (isAbsent) {
       if (presensiState.isStagnant) {
         actions.push({
           kind: "wa",
@@ -330,7 +410,7 @@ export function buildWorkbenchViewModel({
           label: "Follow-up Absen (>3 hr)",
           waType: "presensi",
           domain: "presensi",
-          contextId: `batch_${selectedBatch}_pekan_${currentWeek}`,
+          contextId: `batch_${batchNo}_pekan_${currentWeek}`,
           isFollowup: true,
           detail: `Belum hadir pertemuan pekan ${currentWeek} • ${presensiState.relativeTime}`,
           currentCount: presensiState.count,
@@ -343,7 +423,7 @@ export function buildWorkbenchViewModel({
           label: `Diingatkan Absen (${presensiState.relativeTime})`,
           waType: "presensi",
           domain: "presensi",
-          contextId: `batch_${selectedBatch}_pekan_${currentWeek}`,
+          contextId: `batch_${batchNo}_pekan_${currentWeek}`,
           detail: `Belum hadir pertemuan pekan ${currentWeek} • ${presensiState.count}x kirim`,
           currentCount: presensiState.count,
         });
@@ -355,7 +435,7 @@ export function buildWorkbenchViewModel({
           label: "Kirim WA Presensi",
           waType: "presensi",
           domain: "presensi",
-          contextId: `batch_${selectedBatch}_pekan_${currentWeek}`,
+          contextId: `batch_${batchNo}_pekan_${currentWeek}`,
           detail: `Belum hadir pertemuan pekan ${currentWeek}`,
           currentCount: 0,
         });
@@ -368,11 +448,17 @@ export function buildWorkbenchViewModel({
 
     studentRows.push({
       id: targetMemberId,
+      rowKey: dedupKey,
+      batchNo,
+      classId: group.cls?.id ? String(group.cls.id) : "",
+      className: group.cls?.name || item.class_name || "",
+      classDay: group.schedule?.label || null,
       name: memberName,
       initials: getInitials(memberName),
       phoneDisplay: formatPhoneDisplay(memberPhone),
       rawPhone: memberPhone,
-      searchText: `${memberName.toLowerCase()} ${phoneKey}`,
+      email: memberEmail,
+      searchText: `${memberName.toLowerCase()} ${phoneKey} ${memberEmail.toLowerCase()}`,
       categories,
       presence: presenceObj,
       history: historyObj,
@@ -390,22 +476,30 @@ export function buildWorkbenchViewModel({
   // 4. Hitung Agregasi Summary Card
   const totalStudents = studentRows.length;
 
-  // Card 1: Presensi
-  const attendanceRate = totalStudents > 0 ? ((countHadir / totalStudents) * 100).toFixed(1) + "%" : "0%";
-  const hadirPercent = totalStudents > 0 ? ((countHadir / totalStudents) * 100).toFixed(1) + "%" : "0%";
-  const tidakHadirPercent = totalStudents > 0 ? ((countTidakHadir / totalStudents) * 100).toFixed(1) + "%" : "0%";
+  // Card 1: Presensi — tingkat kehadiran dihitung dari santri yang presensinya sudah diinput
+  const countRecorded = countHadir + countTidakHadir;
+  const percentOfTotal = (n) => (totalStudents > 0 ? ((n / totalStudents) * 100).toFixed(1) + "%" : "0%");
+  const attendanceRate = countRecorded > 0 ? ((countHadir / countRecorded) * 100).toFixed(1) + "%" : "-";
 
   const summaryAttendance = {
     rate: attendanceRate,
     weekBadge: `Pekan ${currentWeek} / ${numMeetings}`,
     studentCount: totalStudents,
     bar: [
-      { key: "hadir", width: hadirPercent, className: "bg-[#0284c7]", title: `Hadir: ${countHadir}` },
-      { key: "tidak_hadir", width: tidakHadirPercent, className: "bg-amber-300", title: `Tidak Hadir: ${countTidakHadir}` },
+      { key: "hadir", width: percentOfTotal(countHadir), className: "bg-[#0284c7]", title: `Hadir: ${countHadir}` },
+      { key: "tidak_hadir", width: percentOfTotal(countTidakHadir), className: "bg-amber-300", title: `Tidak Hadir: ${countTidakHadir}` },
+      { key: "belum_diisi", width: percentOfTotal(countBelumDiisi), className: "bg-slate-300", title: `Belum Diisi: ${countBelumDiisi}` },
+      { key: "belum_berjalan", width: percentOfTotal(countBelumBerjalan), className: "bg-slate-100", title: `Belum Berjalan: ${countBelumBerjalan}` },
     ],
     legend: [
       { label: `${countHadir} Hadir`, dotClass: "bg-[#0284c7]", textClass: "font-medium" },
       { label: `${countTidakHadir} Tidak Hadir`, dotClass: "bg-amber-400", textClass: "font-medium" },
+      ...(countBelumDiisi > 0
+        ? [{ label: `${countBelumDiisi} Belum Diisi`, dotClass: "bg-slate-300", textClass: "text-slate-500 font-medium" }]
+        : []),
+      ...(countBelumBerjalan > 0
+        ? [{ label: `${countBelumBerjalan} Belum Berjalan`, dotClass: "bg-slate-200 border border-slate-300", textClass: "text-slate-500 font-medium" }]
+        : []),
     ],
   };
 
@@ -426,6 +520,8 @@ export function buildWorkbenchViewModel({
 
   // 5. Hitung Tab Counts (Semua, Stagnan > 3 Hari, Perlu Diingatkan, Perlu Perhatian, Lunas & Hadir)
   const countAll = studentRows.length;
+  const countCommitted = studentRows.filter((s) => s.categories.includes("committed")).length;
+  const countUncommitted = studentRows.filter((s) => s.categories.includes("uncommitted")).length;
   const countStagnant = studentRows.filter((s) => s.categories.includes("stagnant")).length;
   const countUnreminded = studentRows.filter((s) => s.categories.includes("unreminded")).length;
   const countAttention = studentRows.filter((s) => s.categories.includes("attention")).length;
@@ -436,6 +532,8 @@ export function buildWorkbenchViewModel({
     ...(countStagnant > 0
       ? [{ id: "stagnant", label: "Stagnan > 3 Hari", count: String(countStagnant), countStyle: "badge" }]
       : []),
+    { id: "committed", label: "Berkomitmen", count: `(${countCommitted})`, countStyle: "plain" },
+    { id: "uncommitted", label: "Tidak Berkomitmen", count: `(${countUncommitted})`, countStyle: "plain" },
     { id: "unreminded", label: "Perlu Diingatkan", count: `(${countUnreminded})`, countStyle: "plain" },
     { id: "attention", label: "Perlu Perhatian", count: `(${countAttention})`, countStyle: "plain" },
     { id: "completed", label: "Lunas & Hadir", count: `(${countCompleted})`, countStyle: "plain" },
@@ -448,7 +546,7 @@ export function buildWorkbenchViewModel({
       weeks: filterWeeks,
       selected: {
         batchId: String(selectedBatch || ""),
-        classId: String(selectedClass?.id || ""),
+        classId: String(selectedClassId || selectedClass?.id || ""),
         weekId: String(currentWeek),
       },
     },
@@ -457,6 +555,7 @@ export function buildWorkbenchViewModel({
     promoted: null,
     table: {
       selectedWeek: currentWeek,
+      notice,
       totalRegistered: totalStudents,
       updatedAt: `Diperbarui: ${new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB`,
       tabs,

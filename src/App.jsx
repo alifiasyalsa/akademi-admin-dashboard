@@ -34,11 +34,13 @@ export default function App() {
   const {
     data,
     loading,
+    loadingLabel,
     error,
     authStatus,
     refreshData,
     onSelectionChange,
     selectedFilters,
+    dayFilter,
   } = useWorkbenchData();
 
   // Primary tab: 'monitoring' | 'registrasi'
@@ -58,7 +60,7 @@ export default function App() {
     adminName: adminProfile?.fullname || stitchMock.header?.adminName || "Admin QuranBest",
     adminRole: adminProfile?.email || stitchMock.header?.adminRole || "Akademi Admin",
     syncLabel: loading
-      ? "Memuat Data..."
+      ? loadingLabel || "Memuat Data..."
       : authStatus.isExpired
       ? "Sesi Berakhir (401)"
       : authStatus.hasToken
@@ -101,14 +103,13 @@ export default function App() {
   }, []);
 
   async function handleSendWa(student, action) {
-    // Cari nama batch yang sedang aktif dari filter
-    const activeBatchObj = data.filters?.batches?.find(
-      (b) => String(b.id) === String(selectedFilters.batchId || data.filters.selected?.batchId)
-    );
-    const batchName = activeBatchObj?.label || selectedFilters.batchId || "16";
+    // Batch diambil dari baris santri (bisa berbeda-beda saat beberapa batch dipilih)
+    const targetBatch = student.batchNo || selectedFilters.batchId || data.filters.selected?.batchId;
+    const activeBatchObj = data.filters?.batches?.find((b) => String(b.id) === String(targetBatch));
+    const batchName = activeBatchObj?.label || targetBatch || "16";
     const phone = student.rawPhone || student.phoneDisplay;
-    const targetBatch = selectedFilters.batchId || data.filters.selected?.batchId;
-    const targetClass = selectedFilters.classId || data.filters.selected?.classId;
+    // Di mode gabungan hari, kelas diambil dari baris santri (bukan dari dropdown Kelas)
+    const targetClass = student.classId || selectedFilters.classId || data.filters.selected?.classId;
     const targetWeek = selectedFilters.weekId || data.filters.selected?.weekId || 1;
 
     // Cari template default aktif dari tabel message_templates Supabase
@@ -221,6 +222,7 @@ export default function App() {
               selection={selectedFilters.batchId ? selectedFilters : data.filters.selected}
               onSelectionChange={onSelectionChange}
               activeMainTab={mainTab}
+              dayFilter={dayFilter}
             />
 
             {/* Main Tabs Navigation: Monitoring vs Registrasi */}
