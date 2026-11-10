@@ -18,6 +18,7 @@ export function ChecklistSelect({
   disabledTitle = "",
   align = "right",
   minWidth = "min-w-[150px]",
+  busy = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -82,7 +83,10 @@ export function ChecklistSelect({
         title={disabled ? disabledTitle : isNoneSelected || isAllSelected ? triggerLabel : selectedLabels.join(", ")}
       >
         <span className="flex items-center gap-1.5 truncate">
-          <MaterialIcon name={icon} className="text-[16px] text-slate-500" />
+          <MaterialIcon
+            name={busy ? "sync" : icon}
+            className={`text-[16px] ${busy ? "text-[#0284c7] animate-spin" : "text-slate-500"}`}
+          />
           <span className="truncate max-w-[240px]">{triggerLabel}</span>
         </span>
         <MaterialIcon

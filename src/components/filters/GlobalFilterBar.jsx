@@ -9,6 +9,7 @@ export function GlobalFilterBar({
   onSelectionChange,
   activeMainTab = "monitoring",
   dayFilter = null,
+  batchesPending = false,
 }) {
   const isRegistrasi = activeMainTab === "registrasi";
 
@@ -68,6 +69,7 @@ export function GlobalFilterBar({
               title="Pilih Batch"
               unitLabel="Batch"
               icon="layers"
+              busy={batchesPending}
               align="left"
               minWidth="min-w-[170px]"
             />

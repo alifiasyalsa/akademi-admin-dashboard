@@ -21,12 +21,12 @@ export function AuthGate({ children }) {
   useEffect(() => {
     const unsubscribe = supabaseAuth.subscribe((session) => setUser(session?.user || null));
     let active = true;
-    supabaseAuth.init().then(({ signedInWithOAuth, error }) => {
+    supabaseAuth.init().then(({ signedInWithOAuth, signInMethod, error }) => {
       if (!active) return;
-      // init() dimemo & effect berjalan 2x di StrictMode: log login Google cukup sekali
+      // init() dimemo & effect berjalan 2x di StrictMode: log login via redirect cukup sekali
       if (signedInWithOAuth && !loggedOAuthLogin) {
         loggedOAuthLogin = true;
-        activityLogService.log({ action: "auth.login", details: { method: "google" } });
+        activityLogService.log({ action: "auth.login", details: { method: signInMethod || "google" } });
       }
       setInitialError(error);
       setUser(supabaseAuth.getUser());

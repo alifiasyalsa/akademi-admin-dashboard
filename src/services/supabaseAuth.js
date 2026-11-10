@@ -52,9 +52,33 @@ async function completeOAuthRedirect() {
     hashParams.get("error_description") ||
     params.get("error") ||
     hashParams.get("error");
-  if (!code && !oauthError) return { handled: false };
+  const hashAccessToken = hashParams.get("access_token");
+  if (!code && !oauthError && !hashAccessToken) return { handled: false };
 
   window.history.replaceState(null, "", window.location.pathname);
+
+  // Link konfirmasi email / magic link (alur implicit): token dikirim lewat hash URL
+  if (hashAccessToken && !oauthError) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${hashAccessToken}` },
+      });
+      if (!res.ok) throw new Error("Link login tidak valid atau sudah kedaluwarsa.");
+      const user = await res.json();
+      setSession(
+        normalizeSession({
+          access_token: hashAccessToken,
+          refresh_token: hashParams.get("refresh_token"),
+          expires_at: Number(hashParams.get("expires_at")) || undefined,
+          expires_in: hashParams.get("expires_in"),
+          user,
+        })
+      );
+      return { handled: true, signedIn: true, method: hashParams.get("type") || "link" };
+    } catch (err) {
+      return { handled: true, error: err.message };
+    }
+  }
   const verifier = localStorage.getItem(PKCE_VERIFIER_KEY);
   localStorage.removeItem(PKCE_VERIFIER_KEY);
 
@@ -67,7 +91,7 @@ async function completeOAuthRedirect() {
   try {
     const payload = await authRequest("token?grant_type=pkce", { auth_code: code, code_verifier: verifier });
     setSession(normalizeSession(payload));
-    return { handled: true, signedIn: true };
+    return { handled: true, signedIn: true, method: "google" };
   } catch (err) {
     return { handled: true, error: err.message };
   }
@@ -229,7 +253,12 @@ export const supabaseAuth = {
             scheduleRefresh();
           }
         }
-        return { session, signedInWithOAuth: Boolean(oauth.signedIn), error: oauth.error || null };
+        return {
+          session,
+          signedInWithOAuth: Boolean(oauth.signedIn),
+          signInMethod: oauth.method || null,
+          error: oauth.error || null,
+        };
       })();
     }
     return initPromise;
@@ -237,6 +266,17 @@ export const supabaseAuth = {
 
   /** Arahkan browser ke halaman login Google (Supabase OAuth, alur PKCE). */
   async signInWithGoogle() {
+    // Cek dulu provider aktif: jika tidak, Supabase menampilkan halaman JSON error mentah setelah redirect.
+    // Provider aktif → 302 ke Google (opaqueredirect); nonaktif → 400 dengan pesan error.
+    const probe = await fetch(
+      `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(currentRedirectUrl())}`,
+      { redirect: "manual" }
+    ).catch(() => null);
+    if (probe && probe.type !== "opaqueredirect" && !probe.ok) {
+      const payload = await probe.json().catch(() => null);
+      throw new Error(translateAuthError(payload, probe.status));
+    }
+
     const { verifier, challenge } = await createPkcePair();
     localStorage.setItem(PKCE_VERIFIER_KEY, verifier);
     const url = new URL(`${SUPABASE_URL}/auth/v1/authorize`);

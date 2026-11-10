@@ -48,6 +48,8 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
     reloadData,
     onSelectionChange,
     selectedFilters,
+    filtersReady,
+    batchesPending,
     dayFilter,
   } = useWorkbenchData();
 
@@ -292,7 +294,8 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
             {/* Global Control Plane Bar */}
             <GlobalFilterBar
               filters={data.filters}
-              selection={selectedFilters.batchId ? selectedFilters : data.filters.selected}
+              selection={filtersReady ? selectedFilters : data.filters.selected}
+              batchesPending={batchesPending}
               onSelectionChange={onSelectionChange}
               activeMainTab={mainTab}
               dayFilter={dayFilter}

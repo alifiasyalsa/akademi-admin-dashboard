@@ -82,6 +82,10 @@ export function useWorkbenchData() {
   // Selected filters: Batch (multi) → Pekan → Hari → Kelas
   const [selectedBatches, setSelectedBatches] = useState([]);
   const selectedBatch = selectedBatches[0] || "";
+  // Pilihan batch yang sedang dimuat: checklist langsung mencerminkan klik, sebelum kelas batch selesai dimuat
+  const [pendingBatches, setPendingBatches] = useState(null);
+  const displayedBatches = pendingBatches ?? selectedBatches;
+  const batchRequestRef = useRef(0);
   const [selectedWeek, setSelectedWeek] = useState("1");
   const [selectedDays, setSelectedDays] = useState(ALL_DAY_IDS);
   const [selectedClassId, setSelectedClassId] = useState("");
@@ -169,8 +173,12 @@ export function useWorkbenchData() {
         return;
       }
 
+      // Klik beruntun: hanya hasil request batch terakhir yang diterapkan
+      const requestId = ++batchRequestRef.current;
+
       if (ids.length === 0) {
         fetchCountRef.current++; // batalkan hasil fetch yang masih berjalan
+        setPendingBatches(null);
         setSelectedBatches([]);
         setSelectedDays(ALL_DAY_IDS);
         setClasses([]);
@@ -191,7 +199,10 @@ export function useWorkbenchData() {
 
       try {
         setLoading(true);
+        setPendingBatches(ids);
         const { classList, scheduleIndex: index } = await loadBatchClasses(ids);
+        if (requestId !== batchRequestRef.current) return;
+        setPendingBatches(null);
         setSelectedBatches(ids);
         setSelectedDays(ALL_DAY_IDS);
         setClasses(classList);
@@ -204,10 +215,12 @@ export function useWorkbenchData() {
             : ""
         );
       } catch (err) {
+        if (requestId !== batchRequestRef.current) return;
+        setPendingBatches(null);
         setSelectedBatches(ids);
         setError(err);
       } finally {
-        setLoading(false);
+        if (requestId === batchRequestRef.current) setLoading(false);
       }
     },
     [batches, weekNum]
@@ -484,7 +497,7 @@ export function useWorkbenchData() {
   const handleSelectionChange = useCallback(
     (newSelection) => {
       const newBatchIds = newSelection.batchIds || (newSelection.batchId ? [newSelection.batchId] : []);
-      if (newBatchIds.join(",") !== selectedBatches.join(",")) {
+      if (newBatchIds.join(",") !== displayedBatches.join(",")) {
         handleBatchesChange(newBatchIds);
         return;
       }
@@ -495,7 +508,7 @@ export function useWorkbenchData() {
         setSelectedWeek(newSelection.weekId);
       }
     },
-    [selectedBatches, selectedClassId, selectedWeek, handleBatchesChange]
+    [displayedBatches, selectedClassId, selectedWeek, handleBatchesChange]
   );
 
   // Handler filter Hari: sebagian hari → mode gabungan; semua hari → kembali ke 1 kelas
@@ -524,9 +537,12 @@ export function useWorkbenchData() {
     // Tanpa bypass cache CMS: hanya data Supabase (infaq manual, log pengingat) yang terambil ulang
     reloadData: () => fetchWorkbenchDetail(),
     onSelectionChange: handleSelectionChange,
+    // Setelah daftar batch dari CMS termuat, pilihan filter selalu dari state ini (termasuk saat kosong)
+    filtersReady: batches.length > 0,
+    batchesPending: pendingBatches !== null,
     selectedFilters: {
-      batchId: selectedBatch,
-      batchIds: selectedBatches,
+      batchId: displayedBatches[0] || "",
+      batchIds: displayedBatches,
       classId: selectedClassId,
       weekId: selectedWeek,
     },
