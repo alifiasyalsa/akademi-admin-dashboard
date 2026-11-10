@@ -324,7 +324,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
                   onTabChange={setActiveTab}
                   onSearchChange={setSearchQuery}
                   onSendWa={handleSendWa}
-                  onManualInfaq={(student) => setManualInfaqRowKey(student.rowKey)}
+                  onManualInfaq={currentUser ? (student) => setManualInfaqRowKey(student.rowKey) : undefined}
                   onRefresh={handleRefresh}
                   onOpenTemplates={() => setIsMonTemplateModalOpen(true)}
                   exportFileParts={monitoringExportParts}

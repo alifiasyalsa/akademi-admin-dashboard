@@ -4,6 +4,7 @@ import { tokenManager } from "../api/tokenManager.js";
 import { buildWorkbenchViewModel } from "../services/workbenchService.js";
 import { reminderTrackingService } from "../services/reminderTrackingService.js";
 import { manualInfaqService } from "../services/manualInfaqService.js";
+import { supabaseAuth } from "../services/supabaseAuth.js";
 import {
   ALL_DAY_IDS,
   buildWeekScheduleIndex,
@@ -377,6 +378,8 @@ export function useWorkbenchData() {
       const loadManualInfaq = async () => {
         const entries = new Map();
         let failed = false;
+        // Tabel infaq manual hanya bisa diakses akun yang login (RLS)
+        if (!supabaseAuth.getUser()) return { entries, failed };
         await Promise.all(
           selectedBatches.map(async (batchNo) => {
             try {
