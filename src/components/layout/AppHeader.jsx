@@ -1,6 +1,6 @@
 import { MaterialIcon } from "../MaterialIcon.jsx";
 
-export function AppHeader({ header }) {
+export function AppHeader({ header, onOpenActivity, onOpenRoles, onSignOut }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_1px_4px_rgba(15,23,42,0.04)]">
       <div className="h-16 w-full px-margin-desktop flex items-center justify-between gap-space-lg">
@@ -30,13 +30,59 @@ export function AppHeader({ header }) {
           <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
           <div className="flex items-center gap-space-sm pl-space-xs">
             <div className="text-right hidden sm:block">
-              <p className="font-label-md text-label-md font-semibold text-slate-900 leading-tight">{header.adminName}</p>
+              <p className="font-label-md text-label-md font-semibold text-slate-900 leading-tight flex items-center justify-end gap-1.5">
+                {header.roleBadge && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                      header.roleBadge === "Super Admin"
+                        ? "bg-violet-50 text-violet-700 border-violet-200"
+                        : "bg-slate-50 text-slate-500 border-slate-200"
+                    }`}
+                  >
+                    {header.roleBadge}
+                  </span>
+                )}
+                {header.adminName}
+              </p>
               <p className="font-label-sm text-label-sm text-slate-500 font-medium">{header.adminRole}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-[#0284c7] border border-sky-300 font-semibold">
               <MaterialIcon name="person" className="text-[#0284c7] text-[18px]" />
             </div>
           </div>
+          {onOpenActivity && (
+            <button
+              type="button"
+              onClick={onOpenActivity}
+              title="Log aktivitas akun"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+            >
+              <MaterialIcon name="history" className="text-[16px]" />
+              <span className="hidden lg:inline">Aktivitas</span>
+            </button>
+          )}
+          {onOpenRoles && (
+            <button
+              type="button"
+              onClick={onOpenRoles}
+              title="Kelola peran akun (Super Admin)"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-colors cursor-pointer"
+            >
+              <MaterialIcon name="admin_panel_settings" className="text-[16px]" />
+              <span className="hidden lg:inline">Kelola Akun</span>
+            </button>
+          )}
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              title="Keluar dari akun"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 bg-white hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+            >
+              <MaterialIcon name="logout" className="text-[16px]" />
+              <span className="hidden lg:inline">Keluar</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

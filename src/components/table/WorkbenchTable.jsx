@@ -3,12 +3,40 @@ import { TableToolbar } from "./TableToolbar.jsx";
 import { TablePagination } from "./TablePagination.jsx";
 import { MemberRow } from "./MemberRow.jsx";
 import { MaterialIcon } from "../MaterialIcon.jsx";
+import { downloadCsv } from "../../services/csvExport.js";
 
-function matchesFilters(student, activeTab, searchQuery) {
+const followupDate = (followup) => followup?.dateLabel && followup.at ? followup.dateLabel : "";
+
+function buildMonitoringColumns(weekLabel) {
+  return [
+    { header: "Nama", value: (s) => s.name },
+    { header: "No. HP", value: (s) => s.phoneDisplay },
+    { header: "Email", value: (s) => s.email },
+    { header: "Batch", value: (s) => s.batchNo },
+    { header: "Kelas", value: (s) => s.className },
+    { header: "Hari", value: (s) => s.classDay },
+    { header: `Presensi Pekan ${weekLabel}`, value: (s) => s.presence?.label },
+    { header: "Historis Presensi", value: (s) => s.history?.score },
+    { header: "Komitmen per Pekan", value: (s) => s.weeklyCommitmentValue ?? "" },
+    { header: "Kewajiban s/d Pekan Ini", value: (s) => s.obligationValue ?? "" },
+    { header: "Infaq Komitmen (CMS)", value: (s) => s.validBreakdown?.commitment ?? "" },
+    { header: "Transaksi Class Banner", value: (s) => s.validBreakdown?.classBanner ?? "" },
+    { header: "Input Manual", value: (s) => s.validBreakdown?.manual ?? "" },
+    { header: "Total Valid Masuk", value: (s) => s.validValue ?? "" },
+    { header: "Status Infaq", value: (s) => s.validNote },
+    { header: "Pengingat Presensi Terakhir", value: (s) => followupDate(s.lastPresensiRemind) },
+    { header: "Total Pengingat Presensi", value: (s) => s.lastPresensiRemind?.totalCount ?? 0 },
+    { header: "Pengingat Infaq Terakhir", value: (s) => followupDate(s.lastInfaqRemind) },
+    { header: "Total Pengingat Infaq", value: (s) => s.lastInfaqRemind?.totalCount ?? 0 },
+  ];
+}
+
+function matchesFilters(student, activeTab, activeSubTab, searchQuery) {
   const searchTerm = searchQuery.toLowerCase().trim();
   const matchesTab = activeTab === "all" || student.categories?.includes(activeTab);
+  const matchesSubTab = activeSubTab === "all" || student.categories?.includes(activeSubTab);
   const matchesSearch = !searchTerm || student.searchText?.includes(searchTerm);
-  return matchesTab && matchesSearch;
+  return matchesTab && matchesSubTab && matchesSearch;
 }
 
 export function WorkbenchTable({
@@ -19,23 +47,46 @@ export function WorkbenchTable({
   onTabChange,
   onSearchChange,
   onSendWa,
+  onManualInfaq,
   onRefresh,
   onOpenTemplates,
+  exportFileParts = [],
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [activeSubTab, setActiveSubTab] = useState("all");
 
   const weekLabel = String(selectedWeek || table?.selectedWeek || 1).replace(/^p/i, "");
 
-  // Filter santri sesuai tab & query pencarian
-  const visibleStudents = useMemo(() => {
-    return (table.students || []).filter((student) => matchesFilters(student, activeTab, searchQuery));
-  }, [table.students, activeTab, searchQuery]);
+  const subTabs = (table.tabs || []).find((tab) => tab.id === activeTab)?.subTabs || [];
+  const effectiveSubTab = subTabs.some((sub) => sub.id === activeSubTab) ? activeSubTab : "all";
 
-  // Reset ke halaman 1 saat filter tab, search query, atau dataset kelas berganti
+  useEffect(() => {
+    setActiveSubTab("all");
+  }, [activeTab]);
+
+  // Filter santri sesuai tab, sub-filter & query pencarian
+  const visibleStudents = useMemo(() => {
+    return (table.students || []).filter((student) =>
+      matchesFilters(student, activeTab, effectiveSubTab, searchQuery)
+    );
+  }, [table.students, activeTab, effectiveSubTab, searchQuery]);
+
+  // Reset ke halaman 1 saat filter tab, sub-filter, search query, atau dataset kelas berganti
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchQuery, table]);
+  }, [activeTab, effectiveSubTab, searchQuery, table]);
+
+  function handleExportCsv() {
+    const tabLabel = (table.tabs || []).find((tab) => tab.id === activeTab)?.label || activeTab;
+    const subTabLabel = effectiveSubTab !== "all" ? subTabs.find((sub) => sub.id === effectiveSubTab)?.label : null;
+    downloadCsv({
+      fileParts: ["monitoring", ...exportFileParts, `pekan-${weekLabel}`, tabLabel, subTabLabel, searchQuery && `cari-${searchQuery}`],
+      rows: visibleStudents,
+      columns: buildMonitoringColumns(weekLabel),
+      context: { tab: "monitoring", filter: tabLabel, sub_filter: subTabLabel, week: weekLabel, search: searchQuery || null },
+    });
+  }
 
   // Kalkulasi pagination
   const totalItems = visibleStudents.length;
@@ -85,19 +136,34 @@ export function WorkbenchTable({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenTemplates}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 shadow-2xs transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
-        >
-          <MaterialIcon name="chat" className="text-[18px] text-[#0284c7]" />
-          <span>Pengaturan Template WA</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={visibleStudents.length === 0}
+            title={`Download ${visibleStudents.length} baris sesuai filter tabel saat ini`}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <MaterialIcon name="download" className="text-[18px] text-slate-500" />
+            <span>Download CSV ({visibleStudents.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenTemplates}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+          >
+            <MaterialIcon name="chat" className="text-[18px] text-[#0284c7]" />
+            <span>Pengaturan Template WA</span>
+          </button>
+        </div>
       </div>
 
       <TableToolbar
         tabs={table.tabs}
         activeTab={activeTab}
+        subTabs={subTabs}
+        activeSubTab={effectiveSubTab}
+        onSubTabChange={setActiveSubTab}
         searchQuery={searchQuery}
         onTabChange={onTabChange}
         onSearchChange={onSearchChange}
@@ -114,7 +180,9 @@ export function WorkbenchTable({
               <th className="py-space-md px-space-md font-semibold">Historis (8 Pk)</th>
               <th className="py-space-md px-space-md text-right font-semibold">Kewajiban</th>
               <th className="py-space-md px-space-md text-right font-semibold">Valid Masuk</th>
-              <th className="py-space-md px-space-md font-semibold">Terakhir Follow-up</th>
+              <th className="py-space-md px-space-md font-semibold" title="Tanggal pengingat terakhir & total berapa kali dihubungi">
+                Follow-up (Terakhir · Total)
+              </th>
               <th className="py-space-md px-space-lg text-right font-semibold">Tindakan WA Mandiri</th>
             </tr>
           </thead>
@@ -128,7 +196,12 @@ export function WorkbenchTable({
               </tr>
             ) : (
               pagedStudents.map((student) => (
-                <MemberRow key={student.rowKey || student.id} student={student} onSendWa={onSendWa} />
+                <MemberRow
+                  key={student.rowKey || student.id}
+                  student={student}
+                  onSendWa={onSendWa}
+                  onManualInfaq={onManualInfaq}
+                />
               ))
             )}
           </tbody>

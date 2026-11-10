@@ -314,6 +314,35 @@ export const cmsApi = {
   },
 
   /**
+   * 9c. TRANSAKSI INFAQ (DATATABLE)
+   * GET /v1/transaction/infaq/datatable?draw=1&end_date=YYYY-MM-DD&limit=50&offset=0&query=&start_date=YYYY-MM-DD
+   * → [{ settlement_at, member: { id, fullname, ... }, infaq_type, title, amount }]
+   */
+  async getInfaqTransactions({ start_date, end_date, query = "", force = false } = {}) {
+    if (!start_date || !end_date) return [];
+    return cached(
+      `infaqTransactions:${start_date}:${end_date}:${query}`,
+      async () => {
+        const fetchPage = async (offset, limit) => {
+          const params = new URLSearchParams({
+            draw: "1",
+            end_date,
+            limit: String(limit),
+            offset: String(offset),
+            query,
+            start_date,
+          });
+          const res = await apiClient(`/transaction/infaq/datatable?${params.toString()}`);
+          return Array.isArray(res?.data) ? res : res?.data || res;
+        };
+        const res = await fetchAllPages(fetchPage, { pageSize: 50 });
+        return res.data;
+      },
+      { force }
+    );
+  },
+
+  /**
    * 10. DAFTAR HADIR KELAS LENGKAP (8 PEKAN)
    * GET /v1/classes/{class_id}/attendance
    */

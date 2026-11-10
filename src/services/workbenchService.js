@@ -9,23 +9,49 @@ import {
 import { reminderTrackingService, makeTrackingKey, formatRelativeDays } from "./reminderTrackingService.js";
 import { getClassWeekSchedule, getWeekStartDates } from "./jadwalService.js";
 
-function buildLastFollowup(logRecord) {
+function buildLastFollowup(logRecord, { totalCount, breakdown = [] } = {}) {
+  const count = logRecord?.reminder_count || 0;
   const at = logRecord?.last_reminded_at || null;
+  const base = {
+    count,
+    totalCount: totalCount ?? count,
+    breakdown,
+  };
   if (!at) {
-    return {
-      at: null,
-      dateLabel: "Belum",
-      relativeLabel: "",
-      count: 0,
-    };
+    return { ...base, at: null, dateLabel: "Belum", relativeLabel: "" };
   }
 
   return {
+    ...base,
     at,
     dateLabel: formatDateTimeDisplay(at),
     relativeLabel: formatRelativeDays(at),
-    count: logRecord?.reminder_count || 0,
   };
+}
+
+const PRESENSI_KEY_PATTERN = /^presensi:(.+):batch_(.+)_pekan_(\d+)$/;
+
+/**
+ * Log pengingat presensi dicatat per pekan (tracking_key ...:batch_{b}_pekan_{n}).
+ * Indeks ini menjumlahkan semua pekan: Map<"batchNo|memberId", { total, weeks: [{ week, count }] }>.
+ */
+function indexPresensiReminderTotals(reminderLogsMap) {
+  const index = new Map();
+  if (!reminderLogsMap?.forEach) return index;
+  reminderLogsMap.forEach((log, trackingKey) => {
+    const match = PRESENSI_KEY_PATTERN.exec(String(trackingKey));
+    if (!match) return;
+    const [, memberId, batchNo, week] = match;
+    const count = Number(log?.reminder_count) || 0;
+    if (count <= 0) return;
+    const key = `${batchNo}|${memberId}`;
+    if (!index.has(key)) index.set(key, { total: 0, weeks: [] });
+    const entry = index.get(key);
+    entry.total += count;
+    entry.weeks.push({ week: Number(week), count });
+  });
+  index.forEach((entry) => entry.weeks.sort((a, b) => a.week - b.week));
+  return index;
 }
 
 /**
@@ -41,6 +67,10 @@ export function buildWorkbenchViewModel({
   classes = [],
   attendanceList = [],
   commitmentsList = [],
+  // Map<"batchNo|memberId", total nominal> transaksi infaq class_banner
+  classBannerInfaqByMember = null,
+  // Map<"batchNo|memberId", rows[]> transaksi infaq input manual (Supabase)
+  manualInfaqByMember = null,
   classAttendance = null,
   teacherSchedule = [],
   reminderLogsMap = null,
@@ -126,6 +156,7 @@ export function buildWorkbenchViewModel({
   // 3. Normalisasi Data Siswa / Peserta
   // Mencegah duplikasi santri per kelas menggunakan unique member key
   const processedMemberKeys = new Set();
+  const presensiReminderTotals = indexPresensiReminderTotals(reminderLogsMap);
   const studentRows = [];
 
   let countHadir = 0;
@@ -279,9 +310,14 @@ export function buildWorkbenchViewModel({
 
     // Hitung Finansial Infaq
     // commitment = nominal per pekan. infaq_amount = total valid masuk (dihitung backend)
+    // ditambah transaksi infaq class_banner & infaq input manual milik member_id yang sama.
     const weeklyCommitment = Number(commitmentData?.commitment) || 0;
     const targetObligation = weeklyCommitment * currentWeek;
-    const validInfaqAmount = Number(commitmentData?.infaq_amount) || 0;
+    const commitmentInfaqAmount = Number(commitmentData?.infaq_amount) || 0;
+    const classBannerAmount = memberId ? Number(classBannerInfaqByMember?.get?.(byBatch(batchNo, memberId))) || 0 : 0;
+    const manualEntries = (memberId && manualInfaqByMember?.get?.(byBatch(batchNo, memberId))) || [];
+    const manualAmount = manualEntries.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+    const validInfaqAmount = commitmentInfaqAmount + classBannerAmount + manualAmount;
 
     totalClassTargetInfaq += targetObligation;
     totalClassValidInfaq += validInfaqAmount;
@@ -293,6 +329,9 @@ export function buildWorkbenchViewModel({
     if (weeklyCommitment === 0 && validInfaqAmount === 0) {
       validTone = "paid";
       validNote = "Bebas Biaya";
+    } else if (weeklyCommitment === 0) {
+      validTone = "advance";
+      validNote = "Infaq Tanpa Komitmen";
     } else if (validInfaqAmount >= targetObligation && targetObligation > 0) {
       if (validInfaqAmount > targetObligation) {
         const extraWeeks = Math.floor((validInfaqAmount - targetObligation) / (weeklyCommitment || 1));
@@ -329,31 +368,13 @@ export function buildWorkbenchViewModel({
 
     // Kategorisasi Tab Filter Santri
     const categories = [];
-    categories.push(weeklyCommitment > 0 ? "committed" : "uncommitted");
+    if (!isAttended) {
+      categories.push("absent");
+      if (isAbsent) categories.push("absent:tidak_hadir");
+      else if (unrecordedLabel === "Belum Diisi") categories.push("absent:belum_diisi");
+      else categories.push("absent:belum_berjalan");
+    }
     if (isOverdue) categories.push("overdue");
-    if (isOverdue || isAbsent) {
-      categories.push("attention");
-    }
-    if (!isOverdue && isAttended) {
-      categories.push("completed");
-    }
-
-    // Flagging siklus pengingat
-    if (infaqState.isStagnant || presensiState.isStagnant) {
-      categories.push("stagnant");
-    }
-    if (
-      (isOverdue && infaqState.status === "unreminded") ||
-      (isAbsent && presensiState.status === "unreminded")
-    ) {
-      categories.push("unreminded");
-    }
-    if (
-      (isOverdue && infaqState.status === "reminded") ||
-      (isAbsent && presensiState.status === "reminded")
-    ) {
-      categories.push("reminded");
-    }
 
     // Action Generator Dinamis (Infaq & Presensi)
     const actions = [];
@@ -448,6 +469,7 @@ export function buildWorkbenchViewModel({
 
     studentRows.push({
       id: targetMemberId,
+      memberId,
       rowKey: dedupKey,
       batchNo,
       classId: group.cls?.id ? String(group.cls.id) : "",
@@ -462,12 +484,26 @@ export function buildWorkbenchViewModel({
       categories,
       presence: presenceObj,
       history: historyObj,
+      weeklyCommitmentValue: weeklyCommitment,
+      obligationValue: targetObligation,
+      validValue: validInfaqAmount,
       obligationAmount: formatRupiah(targetObligation),
       obligationNote: weeklyCommitment > 0 ? `@${formatRupiah(weeklyCommitment)}/pk` : "Reguler",
       validAmount: formatRupiah(validInfaqAmount),
       validNote,
       validTone,
-      lastPresensiRemind: buildLastFollowup(presensiLog),
+      validBreakdown: {
+        commitment: commitmentInfaqAmount,
+        classBanner: classBannerAmount,
+        manual: manualAmount,
+        manualEntries,
+      },
+      lastPresensiRemind: buildLastFollowup(presensiLog, {
+        totalCount: presensiReminderTotals.get(byBatch(batchNo, targetMemberId))?.total || 0,
+        breakdown: (presensiReminderTotals.get(byBatch(batchNo, targetMemberId))?.weeks || []).map(
+          ({ week, count }) => `Pekan ${week}: ${count}x`
+        ),
+      }),
       lastInfaqRemind: buildLastFollowup(infaqLog),
       actions,
     });
@@ -518,25 +554,31 @@ export function buildWorkbenchViewModel({
     barWidth: Math.min(infaqRateVal, 100).toFixed(1) + "%",
   };
 
-  // 5. Hitung Tab Counts (Semua, Stagnan > 3 Hari, Perlu Diingatkan, Perlu Perhatian, Lunas & Hadir)
+  // 5. Hitung Tab Counts (Semua Anggota, Belum Presensi, Belum Infaq)
   const countAll = studentRows.length;
-  const countCommitted = studentRows.filter((s) => s.categories.includes("committed")).length;
-  const countUncommitted = studentRows.filter((s) => s.categories.includes("uncommitted")).length;
-  const countStagnant = studentRows.filter((s) => s.categories.includes("stagnant")).length;
-  const countUnreminded = studentRows.filter((s) => s.categories.includes("unreminded")).length;
-  const countAttention = studentRows.filter((s) => s.categories.includes("attention")).length;
-  const countCompleted = studentRows.filter((s) => s.categories.includes("completed")).length;
+  const countByCategory = (category) => studentRows.filter((s) => s.categories.includes(category)).length;
+  const countAbsent = countByCategory("absent");
+  const countOverdue = countByCategory("overdue");
 
   const tabs = [
     { id: "all", label: "Semua Anggota", count: `(${countAll})`, countStyle: "plain" },
-    ...(countStagnant > 0
-      ? [{ id: "stagnant", label: "Stagnan > 3 Hari", count: String(countStagnant), countStyle: "badge" }]
-      : []),
-    { id: "committed", label: "Berkomitmen", count: `(${countCommitted})`, countStyle: "plain" },
-    { id: "uncommitted", label: "Tidak Berkomitmen", count: `(${countUncommitted})`, countStyle: "plain" },
-    { id: "unreminded", label: "Perlu Diingatkan", count: `(${countUnreminded})`, countStyle: "plain" },
-    { id: "attention", label: "Perlu Perhatian", count: `(${countAttention})`, countStyle: "plain" },
-    { id: "completed", label: "Lunas & Hadir", count: `(${countCompleted})`, countStyle: "plain" },
+    {
+      id: "absent",
+      label: "Belum Presensi",
+      count: `(${countAbsent})`,
+      countStyle: "plain",
+      subTabs: [
+        { id: "all", label: "Semua", count: countAbsent },
+        { id: "absent:tidak_hadir", label: "Tidak Hadir", count: countByCategory("absent:tidak_hadir") },
+        { id: "absent:belum_diisi", label: "Belum Diisi", count: countByCategory("absent:belum_diisi") },
+        {
+          id: "absent:belum_berjalan",
+          label: "Kelas Belum Berjalan (Reschedule)",
+          count: countByCategory("absent:belum_berjalan"),
+        },
+      ],
+    },
+    { id: "overdue", label: "Belum Infaq", count: `(${countOverdue})`, countStyle: "plain" },
   ];
 
   return {

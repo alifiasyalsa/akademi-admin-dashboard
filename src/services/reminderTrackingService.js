@@ -8,17 +8,8 @@
  * 3. Registrasi (Santri wait belum memilih kelas)
  */
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ihbsysccstltadfaztgz.supabase.co";
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_-r4Af6aaQrcjbu6wI_wRvw_7bvJN-eC";
-
-function getHeaders(prefer = "return=representation") {
-  return {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
-    "Content-Type": "application/json",
-    Prefer: prefer,
-  };
-}
+import { SUPABASE_URL, SUPABASE_KEY, supabaseHeaders as getHeaders } from "./supabaseAuth.js";
+import { activityLogService } from "./activityLogService.js";
 
 /**
  * Format selisih waktu ke teks relatif yang mudah dibaca
@@ -146,6 +137,16 @@ export const reminderTrackingService = {
       }
 
       const result = await res.json();
+      activityLogService.log({
+        action: "reminder.sent",
+        entityType: "reminder_logs",
+        entityId: trackingKey,
+        memberId,
+        memberName,
+        batchId,
+        classId,
+        details: { domain, context: contextId || null, reminder_count: newCount, template: notes || null },
+      });
       return Array.isArray(result) ? result[0] : result;
     } catch (err) {
       console.error("[reminderTracking] Error saat upsert reminder:", err);

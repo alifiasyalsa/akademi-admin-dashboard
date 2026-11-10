@@ -26,6 +26,10 @@ Aplikasi ini adalah **Operational Workbench & CRM** berbasis web untuk tim Admin
 2. **Supabase Database (Backend Pelengkap)**:
    - **Tabel `reminder_logs`**: Menyimpan histori pengingat WA santri (siapa yang sudah diingatkan, kapan terakhir diingatkan, berapa kali pengingat terkirim) sehingga multi-admin tidak melakukan follow-up ganda.
    - **Tabel `message_templates`**: Menyimpan template pesan WhatsApp kustom yang bisa diatur per kategori (registrasi / monitoring) langsung dari modal dashboard, dengan fallback ke `DEFAULT_TEMPLATES`.
+   - **Supabase Auth (login akun admin)**: Dashboard hanya tampil setelah login email + password (`src/components/auth/AuthGate.jsx`, `src/services/supabaseAuth.js`). Semua request Supabase membawa JWT akun yang login. Akun dibuat manual di Supabase Dashboard (pendaftaran publik dimatikan).
+   - **Tabel `admin_roles`**: Peran akun per email (`admin` default / `super_admin`), skema di `supabase/admin_roles.sql` (jalankan pertama). Super admin: lihat log aktivitas semua akun, hapus infaq manual akun lain, kelola peran (tombol "Kelola Akun"). Dijaga RLS via fungsi `is_super_admin()`.
+   - **Tabel `activity_logs`**: Log aktivitas per akun (login/logout, kirim pengingat WA, input/hapus infaq manual, ubah template), skema di `supabase/auth_activity_logs.sql`. Dilihat dari tombol "Aktivitas" di header.
+   - **Tabel `manual_infaq_transactions`**: Transaksi infaq yang diinput manual oleh admin per member & batch (skema di `supabase/manual_infaq_transactions.sql`). Valid Masuk = `infaq_amount` komitmen + transaksi `class_banner` (`/transaction/infaq/datatable`) + infaq manual.
 3. **WhatsApp Web / App (`wa.me`)**:
    - Integrasi langsung membuka tautan `https://wa.me/62...` dengan teks template yang sudah terisi nama santri, rekomendasi kelas, atau rincian infaq.
 
@@ -135,7 +139,7 @@ Agar AI tidak berasumsi salah, berikut status aktual setiap fitur:
 | **Tracking Pengingat Supabase** | ✅ **Aktif** | Menggunakan REST API Supabase ke tabel `reminder_logs` melalui `reminderTrackingService.js`. |
 | **Kustomisasi Template WA** | ✅ **Aktif** | Modal `MessageTemplateModal.jsx` terhubung ke tabel `message_templates` di Supabase dengan fallback lokal. |
 | **Routing & Hosting Vercel** | ✅ **Aktif** | Sukses di-deploy ke Vercel dengan SPA fallback di `vercel.json`. |
-| **Ekspor CSV** | ❌ **BELUM ADA** | *Belum diimplementasikan sama sekali*. Tidak ada file `csvExportService.js` dan belum ada tombol export di `TableToolbar.jsx` maupun `RegistrasiTable.jsx`. |
+| **Ekspor CSV** | ✅ **Aktif** | Tombol "Download CSV" di header `WorkbenchTable.jsx` (Monitoring) & `RegistrasiTable.jsx` (Registrasi). Mengekspor seluruh baris hasil filter tabel aktif (tab, sub-filter, kelas rekomendasi, pencarian; semua halaman) via `src/services/csvExport.js`, dicatat ke `activity_logs`. |
 | **Validasi Nomor HP WA** | ⚠️ **BELUM AMAN** | `formatWaPhone` di `formatters.js` belum memvalidasi apakah nomor valid/kosong. Jika nomor kosong, sistem tetap membuka `wa.me/62` dan status tombol tetap berubah menjadi terkirim (*false success*). |
 | **Mobile Responsive** | ⚠️ **DESKTOP-FIRST** | Tampilan saat ini dirancang optimal untuk layar laptop/desktop. Penyesuaian ke mobile membutuhkan desain antarmuka baru (misal via Stitch) terutama untuk penyajian data tabel agar nyaman dibaca di layar HP. |
 

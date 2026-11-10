@@ -3,6 +3,7 @@ import { cmsApi } from "../api/cmsEndpoints.js";
 import { tokenManager } from "../api/tokenManager.js";
 import { buildWorkbenchViewModel } from "../services/workbenchService.js";
 import { reminderTrackingService } from "../services/reminderTrackingService.js";
+import { manualInfaqService } from "../services/manualInfaqService.js";
 import {
   ALL_DAY_IDS,
   buildWeekScheduleIndex,
@@ -16,6 +17,7 @@ import { stitchMock } from "../data/stitchMock.js";
 export const ALL_DAY_CLASSES_ID = "__semua_kelas_hari__";
 
 const MAX_PARALLEL_CLASS_FETCH = 6;
+const CLASS_BANNER_INFAQ_TYPE = "class_banner";
 
 // Hanya batch berjudul "16" dan batch yang lebih baru (batch_no lebih besar) yang ditampilkan.
 // Catatan: batch_no ≠ judul batch (mis. batch_no 16 = "Quran Camp #1").
@@ -329,6 +331,56 @@ export function useWorkbenchData() {
             return (res.data || []).map((c) => ({ ...c, _batch: batchNo }));
           })
         ).then((lists) => lists.flat());
+      // Transaksi infaq class_banner per batch (rentang tanggal dari jadwal kelas batch tsb),
+      // dijumlahkan per member_id → ditambahkan ke infaq valid komitmen.
+      const loadClassBannerInfaq = async () => {
+        const totals = new Map();
+        let failed = false;
+        await Promise.all(
+          selectedBatches.map(async (batchNo) => {
+            const range = getScheduleRange(classes.filter((c) => String(c.batch) === String(batchNo)));
+            if (!range) return;
+            try {
+              const transactions = await cmsApi.getInfaqTransactions({
+                start_date: range.start,
+                end_date: range.end,
+                force,
+              });
+              transactions.forEach((trx) => {
+                const memberId = trx?.member?.id;
+                if (trx?.infaq_type !== CLASS_BANNER_INFAQ_TYPE || !memberId) return;
+                const key = `${batchNo}|${memberId}`;
+                totals.set(key, (totals.get(key) || 0) + (Number(trx.amount) || 0));
+              });
+            } catch (err) {
+              console.warn(`Gagal memuat transaksi infaq class_banner batch ${batchNo}:`, err);
+              failed = true;
+            }
+          })
+        );
+        return { totals, failed };
+      };
+      // Transaksi infaq manual (Supabase) per batch, dikelompokkan per member_id
+      const loadManualInfaq = async () => {
+        const entries = new Map();
+        let failed = false;
+        await Promise.all(
+          selectedBatches.map(async (batchNo) => {
+            try {
+              const rows = await manualInfaqService.fetchByBatch(batchNo);
+              rows.forEach((row) => {
+                const key = `${batchNo}|${row.member_id}`;
+                if (!entries.has(key)) entries.set(key, []);
+                entries.get(key).push(row);
+              });
+            } catch (err) {
+              console.warn(`Gagal memuat infaq manual batch ${batchNo}:`, err);
+              failed = true;
+            }
+          })
+        );
+        return { entries, failed };
+      };
       const loadReminderLogs = () =>
         Promise.all(
           selectedBatches.map((batchNo) =>
@@ -336,10 +388,12 @@ export function useWorkbenchData() {
           )
         ).then((maps) => new Map(maps.flatMap((m) => [...m])));
 
-      const [groupResults, commitmentsList, reminderLogsMap, teacherClassesRes] = await Promise.all([
+      const [groupResults, commitmentsList, reminderLogsMap, classBannerInfaq, manualInfaq, teacherClassesRes] = await Promise.all([
         mapWithLimit(targetClasses, MAX_PARALLEL_CLASS_FETCH, fetchClassGroup),
         loadCommitments(),
         loadReminderLogs(),
+        loadClassBannerInfaq(),
+        loadManualInfaq(),
         activeClass?.teacher?.id
           ? cmsApi.getTeacherClasses(activeClass.teacher.id, { force }).catch(() => [])
           : Promise.resolve(null),
@@ -369,6 +423,12 @@ export function useWorkbenchData() {
             .join(", ")}`
         );
       }
+      if (classBannerInfaq.failed) {
+        noticeParts.push("Transaksi infaq class_banner gagal dimuat (belum ditambahkan ke Valid Masuk)");
+      }
+      if (manualInfaq.failed) {
+        noticeParts.push("Infaq manual gagal dimuat dari Supabase (belum ditambahkan ke Valid Masuk)");
+      }
       const notice = noticeParts.length > 0 ? noticeParts.join(" • ") : null;
 
       // Filter jadwal khusus kelas aktif jika ada (label tanggal di dropdown Pekan)
@@ -391,6 +451,8 @@ export function useWorkbenchData() {
         classes: dayClasses,
         classGroups: groupResults.filter((g) => !g.failed),
         commitmentsList,
+        classBannerInfaqByMember: classBannerInfaq.totals,
+        manualInfaqByMember: manualInfaq.entries,
         teacherSchedule: extractedSchedule,
         reminderLogsMap,
         scheduleIndex,
@@ -459,6 +521,8 @@ export function useWorkbenchData() {
     error,
     authStatus,
     refreshData: () => fetchWorkbenchDetail({ force: true }),
+    // Tanpa bypass cache CMS: hanya data Supabase (infaq manual, log pengingat) yang terambil ulang
+    reloadData: () => fetchWorkbenchDetail(),
     onSelectionChange: handleSelectionChange,
     selectedFilters: {
       batchId: selectedBatch,

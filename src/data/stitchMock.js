@@ -77,10 +77,19 @@ export const stitchMock = {
     updatedAt: "Diperbarui: Hari ini, 09:30 WIB",
     tabs: [
       { id: "all", label: "Semua Anggota", count: "(42)", countStyle: "plain" },
-      { id: "attention", label: "Perlu Perhatian", count: "18", countStyle: "badge" },
-      { id: "overdue", label: "Infaq Tertunggak", count: "(11)", countStyle: "plain" },
-      { id: "unselected-class", label: "Promoted Belum Pilih", count: "(9)", countStyle: "plain" },
-      { id: "completed", label: "Lunas & Hadir Penuh", count: "(24)", countStyle: "plain" },
+      {
+        id: "absent",
+        label: "Belum Presensi",
+        count: "(2)",
+        countStyle: "plain",
+        subTabs: [
+          { id: "all", label: "Semua", count: 2 },
+          { id: "absent:tidak_hadir", label: "Tidak Hadir", count: 2 },
+          { id: "absent:belum_diisi", label: "Belum Diisi", count: 0 },
+          { id: "absent:belum_berjalan", label: "Kelas Belum Berjalan (Reschedule)", count: 0 },
+        ],
+      },
+      { id: "overdue", label: "Belum Infaq", count: "(4)", countStyle: "plain" },
     ],
     students: [
       {
@@ -89,7 +98,7 @@ export const stitchMock = {
         initials: "AH",
         phoneDisplay: "0812-3456-7890",
         searchText: "ahmad haidar 08123456789",
-        categories: ["overdue", "attention"],
+        categories: ["overdue"],
         presence: { label: "Hadir", tone: "hadir" },
         history: {
           title: "Pekan 1-4: Hadir Penuh",
@@ -126,7 +135,7 @@ export const stitchMock = {
         initials: "HW",
         phoneDisplay: "0813-9876-5432",
         searchText: "hendro wicaksono 08139876543",
-        categories: ["unselected-class", "attention"],
+        categories: [],
         presence: { label: "Hadir", tone: "hadir" },
         history: {
           title: "Pekan 1-4: Hadir Penuh",
@@ -156,7 +165,7 @@ export const stitchMock = {
         initials: "FR",
         phoneDisplay: "0857-1234-4321",
         searchText: "fajar rahmad 085712344321",
-        categories: ["overdue", "attention"],
+        categories: ["absent", "absent:tidak_hadir", "overdue"],
         presence: { label: "Izin", tone: "izin" },
         history: {
           title: "P1: Hadir, P2: Hadir, P3: Hadir, P4: Izin",
@@ -186,7 +195,7 @@ export const stitchMock = {
         initials: "RP",
         phoneDisplay: "0821-5556-6677",
         searchText: "rian pratama 08215556667",
-        categories: ["overdue", "unselected-class", "attention"],
+        categories: ["overdue"],
         presence: { label: "Hadir", tone: "hadir" },
         history: {
           title: "P1: Sakit, P2-4: Hadir",
@@ -224,7 +233,7 @@ export const stitchMock = {
         initials: "SM",
         phoneDisplay: "0878-1122-3344",
         searchText: "siti maryam 087811223344",
-        categories: ["completed"],
+        categories: [],
         presence: { label: "Hadir", tone: "hadir" },
         history: {
           title: "Pekan 1-4: Hadir Penuh",
@@ -245,7 +254,7 @@ export const stitchMock = {
         initials: "DS",
         phoneDisplay: "0899-0011-2233",
         searchText: "dewi sartika 089900112233",
-        categories: ["completed"],
+        categories: [],
         presence: { label: "Hadir", tone: "hadir" },
         history: {
           title: "Pekan 1-4: Hadir Penuh",
@@ -266,7 +275,7 @@ export const stitchMock = {
         initials: "BS",
         phoneDisplay: "0812-7788-9900",
         searchText: "budi santoso 081277889900",
-        categories: ["overdue", "attention"],
+        categories: ["absent", "absent:tidak_hadir", "overdue"],
         presence: { label: "Sakit", tone: "sakit" },
         history: {
           title: "P1-3: Hadir, P4: Sakit",
@@ -296,7 +305,7 @@ export const stitchMock = {
         initials: "AF",
         phoneDisplay: "0852-4433-2211",
         searchText: "anisa fitriani 085244332211",
-        categories: ["unselected-class", "attention"],
+        categories: [],
         presence: { label: "Hadir", tone: "hadir" },
         history: {
           title: "Pekan 1-4: Hadir Penuh",

@@ -2,6 +2,30 @@ import { useState, useMemo, useEffect } from "react";
 import { MaterialIcon } from "../MaterialIcon.jsx";
 import { TablePagination } from "../table/TablePagination.jsx";
 import { RegistrasiRow } from "./RegistrasiRow.jsx";
+import { downloadCsv } from "../../services/csvExport.js";
+import { formatDateTimeDisplay } from "../../services/formatters.js";
+
+const TAB_LABELS = {
+  all: "Semua",
+  wait: "Belum Pilih",
+  pending: "Belum Bayar",
+  not_confirm: "Lewat Batas",
+  cancel: "Mundur",
+  delete: "Dibatalkan",
+  attention: "Follow-up",
+  unreminded: "Belum Diingatkan",
+};
+
+const REGISTRASI_COLUMNS = [
+  { header: "Nama", value: (p) => p.name },
+  { header: "No. HP", value: (p) => p.phone },
+  { header: "Status Pendaftaran", value: (p) => p.regStatusLabel || "Belum Pilih Kelas" },
+  { header: "Tipe", value: (p) => p.tipe },
+  { header: "Kelas Rekomendasi", value: (p) => (p.kelas && p.kelas !== "none" ? p.kelas : "") },
+  { header: "Status Reminder", value: (p) => p.statusLabel },
+  { header: "Jumlah Pengingat", value: (p) => p.reminderCount ?? 0 },
+  { header: "Terakhir Diingatkan", value: (p) => (p.lastRemindedAt ? formatDateTimeDisplay(p.lastRemindedAt) : "") },
+];
 
 export function RegistrasiTable({
   participants = [],
@@ -93,6 +117,18 @@ export function RegistrasiTable({
     setCurrentPage(1);
   }, [activeTab, selectedClass, searchQuery]);
 
+  function handleExportCsv() {
+    const tabLabel = TAB_LABELS[activeTab] || activeTab;
+    const classLabel =
+      selectedClass !== "all" ? classRecommendations.find((opt) => opt.id === selectedClass)?.label || selectedClass : null;
+    downloadCsv({
+      fileParts: ["registrasi", batchLabel, tabLabel, classLabel, searchQuery && `cari-${searchQuery}`],
+      rows: filteredParticipants,
+      columns: REGISTRASI_COLUMNS,
+      context: { tab: "registrasi", filter: tabLabel, class: classLabel, search: searchQuery || null },
+    });
+  }
+
   function handleReset() {
     setActiveTab("all");
     setSelectedClass("all");
@@ -131,14 +167,26 @@ export function RegistrasiTable({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenTemplates}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 shadow-2xs transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
-        >
-          <MaterialIcon name="chat" className="text-[18px] text-[#0284c7]" />
-          <span>Pengaturan Template WA</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={filteredParticipants.length === 0}
+            title={`Download ${filteredParticipants.length} baris sesuai filter tabel saat ini`}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <MaterialIcon name="download" className="text-[18px] text-slate-500" />
+            <span>Download CSV ({filteredParticipants.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenTemplates}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+          >
+            <MaterialIcon name="chat" className="text-[18px] text-[#0284c7]" />
+            <span>Pengaturan Template WA</span>
+          </button>
+        </div>
       </div>
 
       {/* 1. Header Toolbar Filter & Pencarian: 1 Baris Padat & Rapi */}

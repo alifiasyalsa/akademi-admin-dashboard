@@ -6,17 +6,8 @@
  * Kolom: id, category, status_key, title, content, is_default, created_at, updated_at
  */
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ihbsysccstltadfaztgz.supabase.co";
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_-r4Af6aaQrcjbu6wI_wRvw_7bvJN-eC";
-
-function getHeaders(prefer = "return=representation") {
-  return {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
-    "Content-Type": "application/json",
-    Prefer: prefer,
-  };
-}
+import { SUPABASE_URL, SUPABASE_KEY, supabaseHeaders as getHeaders } from "./supabaseAuth.js";
+import { activityLogService } from "./activityLogService.js";
 
 // Template bawaan (fallback jika tabel kosong / offline)
 export const DEFAULT_TEMPLATES = [
@@ -198,7 +189,14 @@ export const templateService = {
       }
 
       const created = await response.json();
-      return Array.isArray(created) ? created[0] : created;
+      const row = Array.isArray(created) ? created[0] : created;
+      activityLogService.log({
+        action: "template.create",
+        entityType: "message_templates",
+        entityId: row?.id,
+        details: { category, status_key, title },
+      });
+      return row;
     } catch (err) {
       console.error("[templateService] Error createTemplate:", err);
       throw err;
@@ -226,6 +224,12 @@ export const templateService = {
         throw new Error(`Gagal update template (HTTP ${response.status})`);
       }
 
+      activityLogService.log({
+        action: "template.update",
+        entityType: "message_templates",
+        entityId: id,
+        details: { title: updates?.title ?? null, fields: Object.keys(updates || {}) },
+      });
       return true;
     } catch (err) {
       console.error("[templateService] Error updateTemplate:", err);
@@ -254,6 +258,14 @@ export const templateService = {
         body: JSON.stringify({ is_default: true, updated_at: new Date().toISOString() }),
       });
 
+      if (response.ok) {
+        activityLogService.log({
+          action: "template.set_default",
+          entityType: "message_templates",
+          entityId: targetId,
+          details: { category, status_key },
+        });
+      }
       return response.ok;
     } catch (err) {
       console.error("[templateService] Error setDefaultTemplate:", err);
@@ -271,6 +283,9 @@ export const templateService = {
         method: "DELETE",
         headers: getHeaders(),
       });
+      if (response.ok) {
+        activityLogService.log({ action: "template.delete", entityType: "message_templates", entityId: id });
+      }
       return response.ok;
     } catch (err) {
       console.error("[templateService] Error deleteTemplate:", err);

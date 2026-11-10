@@ -16,6 +16,12 @@ import { buildWaMessage, openWhatsAppDirectly } from "./services/waService.js";
 import { reminderTrackingService } from "./services/reminderTrackingService.js";
 import { templateService, DEFAULT_TEMPLATES } from "./services/templateService.js";
 import { MessageTemplateModal } from "./components/registrasi/MessageTemplateModal.jsx";
+import { ManualInfaqModal } from "./components/table/ManualInfaqModal.jsx";
+import { manualInfaqService } from "./services/manualInfaqService.js";
+import { formatRupiah } from "./services/formatters.js";
+import { getUserDisplayName } from "./services/supabaseAuth.js";
+import { ActivityLogModal } from "./components/auth/ActivityLogModal.jsx";
+import { RoleManagerModal } from "./components/auth/RoleManagerModal.jsx";
 
 function toastCopy(action) {
   if (action.waType === "infaq") {
@@ -30,7 +36,8 @@ function toastCopy(action) {
   return { icon: "outgoing_mail", subtitle: "Template Pengingat WA" };
 }
 
-export default function App() {
+export default function App({ currentUser = null, currentRole = "admin", onSignOut }) {
+  const isSuperAdmin = currentRole === "super_admin";
   const {
     data,
     loading,
@@ -38,6 +45,7 @@ export default function App() {
     error,
     authStatus,
     refreshData,
+    reloadData,
     onSelectionChange,
     selectedFilters,
     dayFilter,
@@ -51,14 +59,19 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState(null);
   const [pendingRegistrasiCount, setPendingRegistrasiCount] = useState(null);
+  const [isActivityLogOpen, setIsActivityLogOpen] = useState(false);
+  const [isRoleManagerOpen, setIsRoleManagerOpen] = useState(false);
 
   const adminProfile = tokenManager.getAdminProfile();
 
   // Fallback headers & footers
   const headerData = {
     ...(stitchMock.header || {}),
-    adminName: adminProfile?.fullname || stitchMock.header?.adminName || "Admin QuranBest",
-    adminRole: adminProfile?.email || stitchMock.header?.adminRole || "Akademi Admin",
+    adminName: currentUser
+      ? getUserDisplayName(currentUser)
+      : adminProfile?.fullname || stitchMock.header?.adminName || "Admin QuranBest",
+    adminRole: currentUser?.email || adminProfile?.email || stitchMock.header?.adminRole || "Akademi Admin",
+    roleBadge: currentUser ? (isSuperAdmin ? "Super Admin" : "Admin") : null,
     syncLabel: loading
       ? loadingLabel || "Memuat Data..."
       : authStatus.isExpired
@@ -176,11 +189,66 @@ export default function App() {
     }, 3200);
   }
 
+  // Input manual infaq: modal dibaca dari data terbaru (rowKey) agar rincian ikut ter-update setelah simpan
+  const [manualInfaqRowKey, setManualInfaqRowKey] = useState(null);
+  const manualInfaqStudent = manualInfaqRowKey
+    ? (data.table?.students || []).find((s) => s.rowKey === manualInfaqRowKey) || null
+    : null;
+  const manualInfaqBatchLabel = manualInfaqStudent
+    ? data.filters?.batches?.find((b) => String(b.id) === String(manualInfaqStudent.batchNo))?.label ||
+      `Batch ${manualInfaqStudent.batchNo}`
+    : "";
+
+  function showTimedToast(nextToast, ms = 2800) {
+    setToast(nextToast);
+    window.setTimeout(() => setToast(null), ms);
+  }
+
+  async function handleSubmitManualInfaq({ amount, transactionDate, notes }) {
+    const student = manualInfaqStudent;
+    if (!student?.memberId || !student.batchNo) {
+      throw new Error("Data member atau batch tidak lengkap.");
+    }
+    await manualInfaqService.create({
+      memberId: student.memberId,
+      memberName: student.name,
+      batchId: student.batchNo,
+      classId: student.classId,
+      amount,
+      transactionDate,
+      notes,
+    });
+    await reloadData?.();
+    showTimedToast({
+      icon: "payments",
+      title: `Infaq Manual Tersimpan: ${student.name}`,
+      subtitle: `${formatRupiah(amount)} ditambahkan ke Valid Masuk`,
+    });
+  }
+
+  async function handleDeleteManualInfaq(entry) {
+    await manualInfaqService.remove(entry);
+    await reloadData?.();
+    showTimedToast({
+      icon: "delete",
+      title: "Infaq Manual Dihapus",
+      subtitle: `${formatRupiah(entry.amount)} dikurangi dari Valid Masuk`,
+    });
+  }
+
   // Batch name string for subcomponents
   const activeBatchObj = data.filters?.batches?.find(
     (b) => String(b.id) === String(selectedFilters.batchId || data.filters.selected?.batchId)
   );
   const currentBatchLabel = activeBatchObj?.label || "Batch 14 (Aktif)";
+
+  // Nama file CSV Monitoring: batch terpilih + kelas terpilih (tanpa detail hari/jam/level)
+  const selectedBatchLabels = (selectedFilters.batchIds || [])
+    .map((id) => data.filters?.batches?.find((b) => String(b.id) === String(id))?.label || `Batch ${id}`)
+    .join(" ");
+  const selectedClassLabel =
+    data.filters?.classes?.find((c) => String(c.id) === String(selectedFilters.classId))?.label?.split(" • ")[0] || "";
+  const monitoringExportParts = [selectedBatchLabels, selectedClassLabel];
   const currentBatchId = selectedFilters.batchId || data.filters.selected?.batchId;
 
   // Sinkronisasi data real pendaftar (status wait) untuk badge tab registrasi & info bar
@@ -211,7 +279,12 @@ export default function App() {
 
   return (
     <>
-      <AppHeader header={headerData} />
+      <AppHeader
+        header={headerData}
+        onOpenActivity={currentUser ? () => setIsActivityLogOpen(true) : undefined}
+        onOpenRoles={isSuperAdmin ? () => setIsRoleManagerOpen(true) : undefined}
+        onSignOut={onSignOut}
+      />
       <main className="w-full pt-16 bg-[#f8f9ff] min-h-[calc(100vh-64px)] flex-1">
         <div className="flex flex-col w-full">
           <Toast toast={toast} />
@@ -248,8 +321,10 @@ export default function App() {
                   onTabChange={setActiveTab}
                   onSearchChange={setSearchQuery}
                   onSendWa={handleSendWa}
+                  onManualInfaq={(student) => setManualInfaqRowKey(student.rowKey)}
                   onRefresh={handleRefresh}
                   onOpenTemplates={() => setIsMonTemplateModalOpen(true)}
+                  exportFileParts={monitoringExportParts}
                 />
                 <AdminGuidance />
               </>
@@ -276,6 +351,35 @@ export default function App() {
           onTemplatesChange={setMonTemplates}
           onShowToast={setToast}
         />
+
+        <ManualInfaqModal
+          isOpen={Boolean(manualInfaqStudent)}
+          student={manualInfaqStudent}
+          batchLabel={manualInfaqBatchLabel}
+          onClose={() => setManualInfaqRowKey(null)}
+          onSubmit={handleSubmitManualInfaq}
+          onDelete={handleDeleteManualInfaq}
+          canDeleteEntry={(entry) => isSuperAdmin || entry.created_by_id === currentUser?.id}
+        />
+
+        <ActivityLogModal
+          isOpen={isActivityLogOpen}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+          onClose={() => setIsActivityLogOpen(false)}
+        />
+
+        {isSuperAdmin && (
+          <RoleManagerModal
+            isOpen={isRoleManagerOpen}
+            currentUser={currentUser}
+            onClose={() => setIsRoleManagerOpen(false)}
+            onShowToast={(nextToast) => {
+              setToast(nextToast);
+              window.setTimeout(() => setToast(null), 2800);
+            }}
+          />
+        )}
       </main>
       <AppFooter footer={footerData} />
     </>

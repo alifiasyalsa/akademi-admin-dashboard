@@ -1,4 +1,5 @@
 import { MaterialIcon } from "../MaterialIcon.jsx";
+import { formatRupiah } from "../../services/formatters.js";
 
 const PRESENCE_DOT = {
   hadir: "bg-[#0284c7]",
@@ -51,10 +52,29 @@ const VALID_AMOUNT = {
   advance: "block font-bold text-slate-900",
 };
 
-function LastFollowupLine({ label, followup }) {
+function ContactCountPill({ label, followup }) {
+  const total = followup?.totalCount || 0;
+  const tone =
+    total === 0
+      ? "bg-slate-50 text-slate-400 border-slate-200"
+      : total >= 3
+      ? "bg-amber-50 text-amber-800 border-amber-200"
+      : "bg-sky-50 text-[#0369a1] border-sky-200";
+  const title = [`${label} dihubungi total ${total}x`, ...(followup?.breakdown || [])].join("\n");
+  return (
+    <span
+      className={`ml-auto shrink-0 px-1.5 py-0.5 rounded-full border text-[11px] font-semibold tabular-nums leading-none ${tone}`}
+      title={title}
+    >
+      {total}x
+    </span>
+  );
+}
+
+function LastFollowupLine({ label, followup, countScopeLabel }) {
   const hasDate = Boolean(followup?.at);
   return (
-    <div className="flex items-baseline gap-2 min-w-[11rem]">
+    <div className="flex items-baseline gap-2 min-w-[13rem]">
       <span className="font-label-sm text-label-sm uppercase tracking-wider text-slate-400 w-14 shrink-0">
         {label}
       </span>
@@ -65,12 +85,13 @@ function LastFollowupLine({ label, followup }) {
           </span>
           <span className="block font-label-sm text-label-sm text-slate-500 leading-tight">
             {followup.relativeLabel}
-            {followup.count > 0 ? ` · ${followup.count}x` : ""}
+            {countScopeLabel && followup.count > 0 ? ` · ${countScopeLabel} ${followup.count}x` : ""}
           </span>
         </span>
       ) : (
         <span className="font-body-sm text-body-sm text-slate-400 italic">Belum</span>
       )}
+      <ContactCountPill label={label} followup={followup} />
     </div>
   );
 }
@@ -156,7 +177,16 @@ function ActionCell({ student, onSendWa }) {
   );
 }
 
-export function MemberRow({ student, onSendWa }) {
+function validBreakdownTitle(breakdown) {
+  if (!breakdown) return undefined;
+  return [
+    `Komitmen (CMS): ${formatRupiah(breakdown.commitment)}`,
+    `Class Banner: ${formatRupiah(breakdown.classBanner)}`,
+    `Input Manual: ${formatRupiah(breakdown.manual)}`,
+  ].join("\n");
+}
+
+export function MemberRow({ student, onSendWa, onManualInfaq }) {
   return (
     <tr className="hover:bg-slate-50 transition-colors duration-150 group border-b border-slate-100">
       <td className="py-space-md px-space-lg">
@@ -218,13 +248,29 @@ export function MemberRow({ student, onSendWa }) {
         {student.obligationAmount}
         <span className="block font-label-sm text-label-sm text-slate-400">{student.obligationNote}</span>
       </td>
-      <td className="py-space-md px-space-md text-right tabular-nums">
+      <td className="py-space-md px-space-md text-right tabular-nums" title={validBreakdownTitle(student.validBreakdown)}>
         <span className={VALID_AMOUNT[student.validTone]}>{student.validAmount}</span>
         <span className={VALID_NOTE[student.validTone]}>{student.validNote}</span>
+        {onManualInfaq && student.memberId && (
+          <div className="mt-1">
+            <button
+              type="button"
+              onClick={() => onManualInfaq(student)}
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[11px] font-semibold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors cursor-pointer"
+              title="Input manual transaksi infaq"
+            >
+              <MaterialIcon name="add" className="text-[14px]" />
+              Manual
+              {student.validBreakdown?.manualEntries?.length > 0 && (
+                <span className="text-slate-500 font-medium">({student.validBreakdown.manualEntries.length})</span>
+              )}
+            </button>
+          </div>
+        )}
       </td>
       <td className="py-space-md px-space-md">
         <div className="flex flex-col gap-1.5">
-          <LastFollowupLine label="Presensi" followup={student.lastPresensiRemind} />
+          <LastFollowupLine label="Presensi" followup={student.lastPresensiRemind} countScopeLabel="pekan ini" />
           <LastFollowupLine label="Infaq" followup={student.lastInfaqRemind} />
         </div>
       </td>
