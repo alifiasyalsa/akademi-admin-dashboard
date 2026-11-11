@@ -152,9 +152,9 @@ export function RegistrasiTable({
     batchCounts?.attention ?? participants.filter((p) => p.status === "followup").length;
 
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <section className="bg-surface rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Header Aksi Tabel: Terpisah dari baris filter & pencarian */}
-      <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-white">
+      <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-surface">
         <div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <span>Daftar Pendaftar Santri</span>
@@ -173,7 +173,7 @@ export function RegistrasiTable({
             onClick={handleExportCsv}
             disabled={filteredParticipants.length === 0}
             title={`Download ${filteredParticipants.length} baris sesuai filter tabel saat ini`}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MaterialIcon name="download" className="text-[18px] text-slate-500" />
             <span>Download CSV ({filteredParticipants.length})</span>
@@ -190,7 +190,7 @@ export function RegistrasiTable({
       </div>
 
       {/* 1. Header Toolbar Filter & Pencarian: 1 Baris Padat & Rapi */}
-      <div className="px-5 py-2.5 flex items-center justify-between gap-3 bg-white border-b border-slate-200 flex-nowrap overflow-x-auto">
+      <div className="px-5 py-2.5 flex items-center justify-between gap-3 bg-surface border-b border-slate-200 flex-nowrap overflow-x-auto">
         <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
           {/* Tab Semua Non-Confirm */}
           <button
@@ -239,7 +239,7 @@ export function RegistrasiTable({
             onClick={() => setActiveTab("pending")}
             className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeTab === "pending"
-                ? "bg-amber-600 text-white shadow-xs"
+                ? "bg-amber-700 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
             }`}
           >

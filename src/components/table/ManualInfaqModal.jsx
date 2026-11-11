@@ -80,7 +80,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -129,7 +129,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
                   value={amount ? amountNumber.toLocaleString("id-ID") : ""}
                   onChange={(event) => setAmount(event.target.value.replace(/\D/g, ""))}
                   placeholder="15.000"
-                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600"
+                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-surface tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600"
                 />
               </label>
               <label className="block">
@@ -139,7 +139,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
                   value={transactionDate}
                   max={todayIso()}
                   onChange={(event) => setTransactionDate(event.target.value)}
-                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-600"
                 />
               </label>
             </div>
@@ -150,7 +150,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Mis. transfer ke rekening BSI, bukti via WA"
-                className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+                className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-600"
               />
             </label>
 

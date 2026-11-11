@@ -12,7 +12,7 @@ export function TableToolbar({
   onRefresh,
 }) {
   return (
-    <div className="bg-white border-b border-slate-200">
+    <div className="bg-surface border-b border-slate-200">
       <div className="px-5 py-2.5 flex items-center justify-between gap-3 flex-nowrap overflow-x-auto">
         <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
           {tabs.map((tab) => {
@@ -23,7 +23,7 @@ export function TableToolbar({
                 type="button"
                 className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                   isActive
-                    ? "bg-[#FDD6E5] text-slate-900 shadow-xs"
+                    ? "bg-brand-200 text-slate-900 shadow-xs"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
                 }`}
                 onClick={() => onTabChange(tab.id)}
@@ -34,7 +34,7 @@ export function TableToolbar({
                     {tab.count}
                   </span>
                 ) : (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[11px] ${isActive ? "bg-white/60 text-slate-900 font-semibold" : "font-medium text-slate-500"}`}>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[11px] ${isActive ? "bg-surface/60 text-slate-900 font-semibold" : "font-medium text-slate-500"}`}>
                     {tab.count}
                   </span>
                 )}
@@ -74,7 +74,7 @@ export function TableToolbar({
                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                   isActive
                     ? "bg-brand-600 text-white border-brand-600"
-                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                    : "bg-surface text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
                 }`}
                 onClick={() => onSubTabChange(sub.id)}
               >

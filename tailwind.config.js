@@ -1,26 +1,35 @@
+// Palet yang dipakai komponen dibaca dari variabel CSS (src/theme-colors.css) agar bisa
+// berganti terang/gelap lewat class `.dark` di <html> tanpa menambah `dark:` di tiap class.
+// Tema utama "brand" = pink soft; untuk teks kecil pakai shade 600 ke atas.
+const THEMED_PALETTES = ["slate", "brand", "amber", "rose", "teal", "violet", "indigo", "emerald"];
+const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+
+const themedColors = (prefix) =>
+  Object.fromEntries(
+    THEMED_PALETTES.map((name) => [
+      name,
+      Object.fromEntries(SHADES.map((s) => [s, `rgb(var(--${prefix}-${name}-${s}) / <alpha-value>)`])),
+    ])
+  );
+
 /** Design tokens dari ekspor Stitch (code.html), bukan token autentikasi. */
 export default {
   darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      // Latar memakai set variabel sendiri: di mode gelap shade muda jadi tint gelap,
+      // shade pekat tetap pekat (tombol solid + teks putih tetap kontras).
+      backgroundColor: {
+        ...themedColors("bg"),
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        page: "rgb(var(--page) / <alpha-value>)",
+      },
+      borderColor: {
+        DEFAULT: "rgb(var(--c-slate-200) / <alpha-value>)",
+      },
       colors: {
-        // Tema utama pink soft. Kontras sudah dicek WCAG AA:
-        // putih di atas 600 = 5.6:1, teks 600 di atas 50 = 5.2:1, teks 700 di atas 50 = 7.1:1.
-        // Untuk teks kecil di latar terang pakai 600 ke atas; 300–500 hanya untuk dot, border, aksen.
-        brand: {
-          bg: "#fdf8fa",
-          50: "#fdf2f7",
-          100: "#fbe6ef",
-          200: "#f6cddf",
-          300: "#eea8c7",
-          400: "#e07ba7",
-          500: "#cc5689",
-          600: "#b23a70",
-          700: "#93295a",
-          800: "#76234b",
-          900: "#5f1f3e",
-        },
+        ...themedColors("c"),
         "tertiary-fixed": "#acedff",
         "on-error": "#ffffff",
         "on-surface-variant": "#3f4850",

@@ -69,7 +69,7 @@ export function RoleManagerModal({ isOpen, currentUser, onClose, onShowToast }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+      <div className="bg-surface rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-700 border border-violet-200 flex items-center justify-center">
@@ -97,13 +97,13 @@ export function RoleManagerModal({ isOpen, currentUser, onClose, onShowToast }) 
               value={newEmail}
               onChange={(event) => setNewEmail(event.target.value)}
               placeholder="nama@gmail.com"
-              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-600"
             />
           </label>
           <select
             value={newRole}
             onChange={(event) => setNewRole(event.target.value)}
-            className="text-sm px-2.5 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600 cursor-pointer"
+            className="text-sm px-2.5 py-2 rounded-lg border border-slate-200 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-600 cursor-pointer"
           >
             {Object.entries(ROLES).map(([id, meta]) => (
               <option key={id} value={id}>
@@ -161,7 +161,7 @@ export function RoleManagerModal({ isOpen, currentUser, onClose, onShowToast }) 
                           subtitle: `${row.email} → ${ROLES[role].label}`,
                         });
                       }}
-                      className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 bg-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 bg-surface cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {Object.entries(ROLES).map(([id, meta]) => (
                         <option key={id} value={id}>

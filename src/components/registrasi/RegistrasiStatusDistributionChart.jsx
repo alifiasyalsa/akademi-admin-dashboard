@@ -127,7 +127,7 @@ export function RegistrasiStatusDistributionChart({
     : null;
 
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <div className="bg-surface rounded-xl p-5 shadow-sm border border-slate-200">
       {/* Header Visualisasi */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
         <div className="flex items-center gap-2.5">

@@ -8,7 +8,7 @@ export function UnselectedClassCard({
   batchLabel = "Batch",
 }) {
   return (
-    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-white border border-slate-200 relative overflow-hidden">
+    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200 relative overflow-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center">

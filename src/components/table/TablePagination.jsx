@@ -43,7 +43,7 @@ export function TablePagination({
             value={pageSize}
             aria-label="Pilih jumlah baris per halaman"
             onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-            className="bg-white border border-slate-300 rounded px-2 py-0.5 text-slate-700 text-xs font-semibold focus:outline-none focus:border-brand-600 cursor-pointer shadow-sm"
+            className="bg-surface border border-slate-300 rounded px-2 py-0.5 text-slate-700 text-xs font-semibold focus:outline-none focus:border-brand-600 cursor-pointer shadow-sm"
           >
             {pageSizeOptions.map((opt) => (
               <option key={opt} value={opt}>
@@ -62,8 +62,8 @@ export function TablePagination({
           disabled={safePage <= 1}
           className={`px-3 py-1 rounded transition-colors shadow-sm font-medium ${
             safePage <= 1
-              ? "bg-white text-slate-300 border border-slate-200 cursor-not-allowed opacity-60"
-              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
+              ? "bg-surface text-slate-300 border border-slate-200 cursor-not-allowed opacity-60"
+              : "bg-surface text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
           }`}
         >
           Sebelumnya
@@ -86,7 +86,7 @@ export function TablePagination({
               className={`min-w-[32px] px-2.5 py-1 rounded font-bold shadow-sm transition-colors text-center cursor-pointer ${
                 isCurrent
                   ? "bg-brand-600 text-white border border-brand-600"
-                  : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                  : "bg-surface text-slate-700 hover:bg-slate-100 border border-slate-200"
               }`}
             >
               {num}
@@ -100,8 +100,8 @@ export function TablePagination({
           disabled={safePage >= totalPages}
           className={`px-3 py-1 rounded transition-colors shadow-sm font-medium ${
             safePage >= totalPages
-              ? "bg-white text-slate-300 border border-slate-200 cursor-not-allowed opacity-60"
-              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
+              ? "bg-surface text-slate-300 border border-slate-200 cursor-not-allowed opacity-60"
+              : "bg-surface text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
           }`}
         >
           Berikutnya

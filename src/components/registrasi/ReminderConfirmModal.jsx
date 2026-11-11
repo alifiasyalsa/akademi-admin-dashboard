@@ -13,7 +13,7 @@ export function ReminderConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 transform transition-all">
+      <div className="bg-surface rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 transform transition-all">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -53,7 +53,7 @@ export function ReminderConfirmModal({
               <MaterialIcon name="drafts" className="text-[16px]" />
               <span>Pratinjau Pesan Terkirim:</span>
             </div>
-            <p className="italic leading-relaxed text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+            <p className="italic leading-relaxed text-slate-700 bg-surface p-2.5 rounded-lg border border-slate-200">
               {previewMessage}
             </p>
           </div>

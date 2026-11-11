@@ -72,7 +72,7 @@ export function SearchableSelect({
         className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all shadow-sm border text-left ${
           isPrimary
             ? "bg-brand-600 hover:bg-brand-700 text-white border-brand-600"
-            : "bg-white hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20"
+            : "bg-surface hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20"
         }`}
         title={selectedOption ? selectedOption.label : placeholder}
       >
@@ -90,7 +90,7 @@ export function SearchableSelect({
         <div
           className={`absolute top-full ${
             align === "right" ? "right-0" : "left-0"
-          } mt-1.5 w-full sm:min-w-[280px] md:min-w-[340px] max-w-[calc(100vw-32px)] sm:max-w-[420px] bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
+          } mt-1.5 w-full sm:min-w-[280px] md:min-w-[340px] max-w-[calc(100vw-32px)] sm:max-w-[420px] bg-surface rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
         >
           {/* Input Pencarian */}
           <div className="p-2 border-b border-slate-100 bg-slate-50">
@@ -105,7 +105,7 @@ export function SearchableSelect({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full pl-8 pr-7 py-1.5 text-body-sm font-body-sm text-slate-800 placeholder-slate-400 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all"
+                className="w-full pl-8 pr-7 py-1.5 text-body-sm font-body-sm text-slate-800 placeholder-slate-400 bg-surface border border-slate-300 rounded-lg focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all"
               />
               {search && (
                 <button

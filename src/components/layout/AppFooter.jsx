@@ -1,6 +1,6 @@
 export function AppFooter({ footer }) {
   return (
-    <footer className="w-full bg-white border-t border-slate-200 shadow-[0_-1px_4px_rgba(0,0,0,0.02)] py-space-md mt-auto">
+    <footer className="w-full bg-surface border-t border-slate-200 shadow-[0_-1px_4px_rgba(0,0,0,0.02)] py-space-md mt-auto">
       <div className="w-full px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-space-sm">
         <div className="flex items-center gap-space-sm text-slate-500 font-body-sm text-body-sm">
           <span>{footer.copyright}</span>

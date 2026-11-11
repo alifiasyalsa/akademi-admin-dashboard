@@ -79,7 +79,7 @@ export function ChecklistSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all shadow-sm border text-left bg-white hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all shadow-sm border text-left bg-surface hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-surface"
         title={disabled ? disabledTitle : isNoneSelected || isAllSelected ? triggerLabel : selectedLabels.join(", ")}
       >
         <span className="flex items-center gap-1.5 truncate">
@@ -99,7 +99,7 @@ export function ChecklistSelect({
         <div
           className={`absolute top-full ${
             align === "right" ? "right-0" : "left-0"
-          } mt-1.5 w-72 max-w-[calc(100vw-32px)] bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden`}
+          } mt-1.5 w-72 max-w-[calc(100vw-32px)] bg-surface rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden`}
         >
           <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-100 bg-slate-50">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{title}</span>

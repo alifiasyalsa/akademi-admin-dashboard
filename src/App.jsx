@@ -287,7 +287,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
         onOpenRoles={isSuperAdmin ? () => setIsRoleManagerOpen(true) : undefined}
         onSignOut={onSignOut}
       />
-      <main className="w-full pt-16 bg-brand-bg min-h-[calc(100vh-64px)] flex-1">
+      <main className="w-full pt-16 bg-page min-h-[calc(100vh-64px)] flex-1">
         <div className="flex flex-col w-full">
           <Toast toast={toast} />
           <div className="w-full max-w-[1600px] mx-auto px-margin-tablet lg:px-margin-desktop py-space-xl space-y-space-xl">

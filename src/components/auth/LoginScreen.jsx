@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MaterialIcon } from "../MaterialIcon.jsx";
+import { ThemeToggle } from "../layout/ThemeToggle.jsx";
 
 function GoogleLogo() {
   return (
@@ -48,7 +49,8 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
   }
 
   return (
-    <main className="min-h-screen bg-brand-bg flex items-center justify-center p-4">
+    <main className="relative min-h-screen bg-page flex items-center justify-center p-4">
+      <ThemeToggle showLabel={false} className="absolute top-4 right-4" />
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-space-md mb-6">
           <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(178,58,112,0.3)]">
@@ -65,7 +67,7 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
           <div>
             <h1 className="font-headline-sm text-headline-sm font-bold text-slate-900">Masuk ke Dashboard</h1>
             <p className="font-body-sm text-body-sm text-slate-500 mt-0.5">
@@ -79,7 +81,7 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
                 type="button"
                 onClick={handleGoogle}
                 disabled={redirecting || submitting}
-                className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
                 <GoogleLogo />
                 <span>{redirecting ? "Membuka Google..." : "Masuk dengan Google"}</span>
@@ -100,7 +102,7 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="nama@quranbest.id"
-              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-600"
             />
           </label>
 
@@ -112,7 +114,7 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
                 autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="w-full text-sm pl-3 pr-9 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+                className="w-full text-sm pl-3 pr-9 py-2 rounded-lg border border-slate-200 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-600"
               />
               <button
                 type="button"

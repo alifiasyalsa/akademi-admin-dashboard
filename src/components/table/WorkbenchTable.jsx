@@ -164,9 +164,9 @@ export function WorkbenchTable({
   }, [totalPages, safePage]);
 
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <section className="bg-surface rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Header Aksi Tabel: Terpisah dari baris filter & pencarian */}
-      <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-white">
+      <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-surface">
         <div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <span>Workbench Santri &amp; Presensi</span>
@@ -191,7 +191,7 @@ export function WorkbenchTable({
             onClick={handleExportCsv}
             disabled={visibleStudents.length === 0}
             title={`Download ${visibleStudents.length} baris sesuai filter tabel saat ini`}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MaterialIcon name="download" className="text-[18px] text-slate-500" />
             <span>Download CSV ({visibleStudents.length})</span>

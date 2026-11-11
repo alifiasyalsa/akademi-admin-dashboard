@@ -2,7 +2,7 @@ import { MaterialIcon } from "../MaterialIcon.jsx";
 
 export function PromotedCard({ promoted }) {
   return (
-    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-white border border-slate-200">
+    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200">
       <div className="flex items-center justify-between">
         <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-slate-700">
           Anggota Promoted & Konversi

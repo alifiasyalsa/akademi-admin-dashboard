@@ -59,7 +59,7 @@ export function ActivityLogModal({ isOpen, currentUser, isSuperAdmin = false, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+      <div className="bg-surface rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center">
@@ -90,7 +90,7 @@ export function ActivityLogModal({ isOpen, currentUser, isSuperAdmin = false, on
                 type="button"
                 onClick={() => setScope(opt.id)}
                 className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  scope === opt.id ? "bg-[#FDD6E5] text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
+                  scope === opt.id ? "bg-brand-200 text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
                 }`}
               >
                 {opt.label}

@@ -131,7 +131,7 @@ export function RegistrasiRow({ participant, onActionClick }) {
           <button
             type="button"
             onClick={() => onActionClick(participant)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-200 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-sm shadow-amber-200 cursor-pointer"
           >
             <MaterialIcon name="priority_high" className="text-[16px]" />
             <span>Follow-up Mendesak</span>

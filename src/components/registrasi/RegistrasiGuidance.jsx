@@ -2,7 +2,7 @@ import { MaterialIcon } from "../MaterialIcon.jsx";
 
 export function RegistrasiGuidance({ batchLabel = "Batch 14" }) {
   return (
-    <section className="rounded-xl p-space-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg bg-white border border-slate-200 shadow-sm">
+    <section className="rounded-xl p-space-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg bg-surface border border-slate-200 shadow-sm">
       <div className="flex items-start gap-space-md">
         <div className="p-2 rounded-lg mt-0.5 bg-brand-50 text-brand-600 border border-brand-200">
           <MaterialIcon name="security_update_good" className="text-[20px]" />

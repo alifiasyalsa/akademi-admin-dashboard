@@ -21,7 +21,7 @@ export function GlobalFilterBar({
   );
 
   return (
-    <section className="bg-white rounded-xl p-space-lg shadow-sm border border-slate-200">
+    <section className="bg-surface rounded-xl p-space-lg shadow-sm border border-slate-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
         <div className="flex items-center gap-space-md">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-brand-50 text-brand-600 border border-brand-200">

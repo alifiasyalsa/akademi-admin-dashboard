@@ -5,7 +5,7 @@ const PRESENCE_DOT = {
   hadir: "bg-brand-600",
   tidakHadir: "bg-amber-400",
   belumBerjalan: "bg-slate-200 border border-slate-300",
-  belumDiisi: "bg-white border border-dashed border-slate-400",
+  belumDiisi: "bg-surface border border-dashed border-slate-400",
   absen: "bg-amber-400",
   sakit: "bg-amber-400",
   izin: "bg-brand-400",
@@ -33,7 +33,7 @@ const PRESENCE_BADGE = {
     dot: "bg-slate-400",
   },
   belumDiisi: {
-    wrap: "bg-white text-slate-500 border-dashed border-slate-300",
+    wrap: "bg-surface text-slate-500 border-dashed border-slate-300",
     dot: "bg-slate-300",
   },
 };
@@ -116,9 +116,9 @@ function ActionCell({ student, onSendWa }) {
         {student.actions.map((action) => {
           let btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200";
           if (action.variant === "amber") {
-            btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-200";
+            btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-sm shadow-amber-200";
           } else if (action.variant === "secondary") {
-            btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-medium transition-all active:scale-95 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300";
+            btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-medium transition-all active:scale-95 bg-surface hover:bg-slate-50 text-slate-700 border border-slate-300";
           }
           return (
             <button
@@ -156,9 +156,9 @@ function ActionCell({ student, onSendWa }) {
     indigo:
       "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-100",
     secondary:
-      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-medium shadow-sm transition-all active:scale-95 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300",
+      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-medium shadow-sm transition-all active:scale-95 bg-surface hover:bg-slate-50 text-slate-700 border border-slate-300",
     amber:
-      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200",
+      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-amber-200",
   }[action.variant] || "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold bg-brand-600 text-white";
 
   return (

@@ -303,7 +303,7 @@ export function RegistrasiView({
     <div className="space-y-space-xl" id="registrasiTabView">
       {/* Status Sinkronisasi & Info Cache */}
       {lastSyncTime && (
-        <div className="flex items-center justify-between text-xs text-slate-500 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
+        <div className="flex items-center justify-between text-xs text-slate-500 bg-surface px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-teal-500" />
             <span>

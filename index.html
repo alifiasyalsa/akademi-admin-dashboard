@@ -4,6 +4,14 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>QuranBest Akademi - Portal Admin</title>
+    <script>
+      // Terapkan tema tersimpan sebelum render agar tidak berkedip (kunci = THEME_STORAGE_KEY)
+      try {
+        if (localStorage.getItem("qb_akademi_theme") === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    </script>
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
     <link
@@ -15,7 +23,7 @@
       rel="stylesheet"
     />
   </head>
-  <body class="bg-brand-bg text-slate-800 font-body-md text-body-md antialiased min-h-screen flex flex-col">
+  <body class="bg-page text-slate-800 font-body-md text-body-md antialiased min-h-screen flex flex-col">
     <div id="root" class="min-h-screen flex flex-col"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

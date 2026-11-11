@@ -7,7 +7,7 @@ export function NeedFollowupCard({
   criteria = "santri melewati batas waktu follow-up (>3 hari)",
 }) {
   return (
-    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-white border border-slate-200 relative overflow-hidden">
+    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200 relative overflow-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
