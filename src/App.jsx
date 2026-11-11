@@ -12,7 +12,7 @@ import { AdminGuidance } from "./components/guidance/AdminGuidance.jsx";
 import { RegistrasiView } from "./components/registrasi/RegistrasiView.jsx";
 import { Toast } from "./components/feedback/Toast.jsx";
 import { stitchMock } from "./data/stitchMock.js";
-import { buildWaMessage, openWhatsAppDirectly } from "./services/waService.js";
+import { buildWaMessage, openWhatsAppDirectly, cleanBatchLabel } from "./services/waService.js";
 import { reminderTrackingService } from "./services/reminderTrackingService.js";
 import { templateService, DEFAULT_TEMPLATES } from "./services/templateService.js";
 import { MessageTemplateModal } from "./components/registrasi/MessageTemplateModal.jsx";
@@ -137,7 +137,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
     if (activeTemplate && activeTemplate.content) {
       message = templateService.interpolate(activeTemplate.content, {
         nama: student.name || "Sahabat",
-        batch: batchName,
+        batch: cleanBatchLabel(batchName),
         pekan: String(targetWeek),
         kehadiran_pekan_ini: student.presence?.label || "Tidak Hadir",
         skor_kehadiran: student.history?.score || "-",
@@ -287,7 +287,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
         onOpenRoles={isSuperAdmin ? () => setIsRoleManagerOpen(true) : undefined}
         onSignOut={onSignOut}
       />
-      <main className="w-full pt-16 bg-[#f8f9ff] min-h-[calc(100vh-64px)] flex-1">
+      <main className="w-full pt-16 bg-brand-bg min-h-[calc(100vh-64px)] flex-1">
         <div className="flex flex-col w-full">
           <Toast toast={toast} />
           <div className="w-full max-w-[1600px] mx-auto px-margin-tablet lg:px-margin-desktop py-space-xl space-y-space-xl">
@@ -348,6 +348,10 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
         {/* Modal Pengaturan Template Pesan Monitoring */}
         <MessageTemplateModal
           category="monitoring"
+          previewData={{
+            pekan: selectedFilters.weekId || data.filters.selected?.weekId,
+            batch: activeBatchObj ? cleanBatchLabel(activeBatchObj.label) : null,
+          }}
           isOpen={isMonTemplateModalOpen}
           onClose={() => setIsMonTemplateModalOpen(false)}
           templates={monTemplates}

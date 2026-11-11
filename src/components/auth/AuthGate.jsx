@@ -62,9 +62,9 @@ export function AuthGate({ children }) {
   }
 
   const loadingScreen = (
-    <main className="min-h-screen bg-[#f8f9ff] flex items-center justify-center">
+    <main className="min-h-screen bg-brand-bg flex items-center justify-center">
       <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
-        <MaterialIcon name="hourglass_top" className="text-[18px] text-[#0284c7]" />
+        <MaterialIcon name="hourglass_top" className="text-[18px] text-brand-600" />
         Memeriksa sesi login...
       </span>
     </main>

@@ -158,7 +158,7 @@ export function RegistrasiTable({
         <div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <span>Daftar Pendaftar Santri</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-[#0284c7] border border-sky-200">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200">
               {batchLabel}
             </span>
           </h2>
@@ -181,9 +181,9 @@ export function RegistrasiTable({
           <button
             type="button"
             onClick={onOpenTemplates}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
           >
-            <MaterialIcon name="chat" className="text-[18px] text-[#0284c7]" />
+            <MaterialIcon name="chat" className="text-[18px] text-brand-600" />
             <span>Pengaturan Template WA</span>
           </button>
         </div>
@@ -198,7 +198,7 @@ export function RegistrasiTable({
             onClick={() => setActiveTab("all")}
             className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeTab === "all"
-                ? "bg-[#0284c7] text-white shadow-xs"
+                ? "bg-brand-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
             }`}
           >
@@ -218,11 +218,11 @@ export function RegistrasiTable({
             onClick={() => setActiveTab("wait")}
             className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeTab === "wait"
-                ? "bg-[#0284c7] text-white shadow-xs"
+                ? "bg-brand-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
             <span>Belum Pilih</span>
             <span
               className={`px-1.5 py-0.2 rounded-full text-[11px] ${
@@ -323,7 +323,7 @@ export function RegistrasiTable({
             onClick={() => setActiveTab("attention")}
             className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeTab === "attention"
-                ? "bg-[#0284c7] text-white shadow-xs"
+                ? "bg-brand-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
             }`}
           >
@@ -348,7 +348,7 @@ export function RegistrasiTable({
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="appearance-none text-xs pl-2.5 pr-7 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0284c7] bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs max-w-[170px] truncate"
+              className="appearance-none text-xs pl-2.5 pr-7 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-600 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs max-w-[170px] truncate"
             >
               {classRecommendations.map((opt) => (
                 <option key={opt.id} value={opt.id}>
@@ -373,7 +373,7 @@ export function RegistrasiTable({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari santri/kontak..."
-              className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0284c7] bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400"
+              className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400"
             />
           </div>
 
@@ -420,7 +420,7 @@ export function RegistrasiTable({
           <button
             type="button"
             onClick={handleReset}
-            className="mt-5 px-4 py-2 rounded-lg font-label-md text-label-md font-semibold bg-[#0284c7] text-white hover:bg-[#0369a1] transition-all cursor-pointer shadow-sm"
+            className="mt-5 px-4 py-2 rounded-lg font-label-md text-label-md font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-all cursor-pointer shadow-sm"
           >
             Kembali ke Daftar Lengkap
           </button>

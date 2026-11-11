@@ -79,13 +79,13 @@ export function ChecklistSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all shadow-sm border text-left bg-white hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all shadow-sm border text-left bg-white hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
         title={disabled ? disabledTitle : isNoneSelected || isAllSelected ? triggerLabel : selectedLabels.join(", ")}
       >
         <span className="flex items-center gap-1.5 truncate">
           <MaterialIcon
             name={busy ? "sync" : icon}
-            className={`text-[16px] ${busy ? "text-[#0284c7] animate-spin" : "text-slate-500"}`}
+            className={`text-[16px] ${busy ? "text-brand-600 animate-spin" : "text-slate-500"}`}
           />
           <span className="truncate max-w-[240px]">{triggerLabel}</span>
         </span>
@@ -108,7 +108,7 @@ export function ChecklistSelect({
                 type="button"
                 onClick={() => onChange(allIds)}
                 disabled={isAllSelected}
-                className="text-[11px] font-semibold text-[#0284c7] hover:underline disabled:text-slate-300 disabled:no-underline cursor-pointer disabled:cursor-default"
+                className="text-[11px] font-semibold text-brand-600 hover:underline disabled:text-slate-300 disabled:no-underline cursor-pointer disabled:cursor-default"
               >
                 Pilih Semua
               </button>
@@ -132,14 +132,14 @@ export function ChecklistSelect({
                 <label
                   key={id}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-body-sm cursor-pointer select-none transition-colors ${
-                    checked ? "bg-sky-50 text-[#0284c7] font-semibold" : "text-slate-700 hover:bg-slate-100"
+                    checked ? "bg-brand-50 text-brand-600 font-semibold" : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleOption(id)}
-                    className="w-4 h-4 rounded accent-[#0284c7] cursor-pointer"
+                    className="w-4 h-4 rounded accent-brand-600 cursor-pointer"
                   />
                   <span className="truncate">{opt.label}</span>
                 </label>

@@ -71,8 +71,8 @@ export function SearchableSelect({
         onClick={() => setIsOpen((prev) => !prev)}
         className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all shadow-sm border text-left ${
           isPrimary
-            ? "bg-[#0284c7] hover:bg-[#0369a1] text-white border-[#0284c7]"
-            : "bg-white hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/20"
+            ? "bg-brand-600 hover:bg-brand-700 text-white border-brand-600"
+            : "bg-white hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20"
         }`}
         title={selectedOption ? selectedOption.label : placeholder}
       >
@@ -105,7 +105,7 @@ export function SearchableSelect({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full pl-8 pr-7 py-1.5 text-body-sm font-body-sm text-slate-800 placeholder-slate-400 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7] transition-all"
+                className="w-full pl-8 pr-7 py-1.5 text-body-sm font-body-sm text-slate-800 placeholder-slate-400 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all"
               />
               {search && (
                 <button
@@ -121,7 +121,7 @@ export function SearchableSelect({
             {filteredOptions.length > 0 && (
               <div className="flex items-center justify-between px-1 pt-1.5 text-[11px] text-slate-400">
                 <span>Ditemukan: {filteredOptions.length} opsi</span>
-                {search && <span className="text-[#0284c7] font-medium">Kata kunci: &quot;{search}&quot;</span>}
+                {search && <span className="text-brand-600 font-medium">Kata kunci: &quot;{search}&quot;</span>}
               </div>
             )}
           </div>
@@ -146,13 +146,13 @@ export function SearchableSelect({
                     }}
                     className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left text-body-sm transition-colors ${
                       isSelected
-                        ? "bg-sky-50 text-[#0284c7] font-semibold"
+                        ? "bg-brand-50 text-brand-600 font-semibold"
                         : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
                     <span className="truncate">{opt.label}</span>
                     {isSelected && (
-                      <MaterialIcon name="check" className="text-[16px] text-[#0284c7] shrink-0" />
+                      <MaterialIcon name="check" className="text-[16px] text-brand-600 shrink-0" />
                     )}
                   </button>
                 );

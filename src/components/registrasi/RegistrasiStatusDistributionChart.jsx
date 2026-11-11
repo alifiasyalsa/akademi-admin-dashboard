@@ -44,10 +44,10 @@ export function RegistrasiStatusDistributionChart({
       label: "Belum Pilih Kelas",
       sublabel: "Status Wait",
       count: waitCount,
-      color: "#0284c7", // sky-600
-      lightBg: "bg-sky-50",
-      textColor: "text-[#0284c7]",
-      borderColor: "border-sky-200",
+      color: "#b23a70", // brand-600
+      lightBg: "bg-brand-50",
+      textColor: "text-brand-600",
+      borderColor: "border-brand-200",
       icon: "schedule",
     },
     {

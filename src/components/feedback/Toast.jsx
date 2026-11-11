@@ -9,7 +9,7 @@ export function Toast({ toast }) {
         isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
       }`}
     >
-      <MaterialIcon name={toast?.icon || "check_circle"} className="text-sky-400 text-[20px]" />
+      <MaterialIcon name={toast?.icon || "check_circle"} className="text-brand-400 text-[20px]" />
       <div>
         <p className="font-label-md text-label-md font-semibold text-white">{toast?.title || "Pesan WhatsApp Disiapkan"}</p>
         <p className="font-body-sm text-body-sm text-slate-300 opacity-90">

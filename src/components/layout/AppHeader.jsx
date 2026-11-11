@@ -6,7 +6,7 @@ export function AppHeader({ header, onOpenActivity, onOpenRoles, onSignOut }) {
       <div className="h-16 w-full px-margin-desktop flex items-center justify-between gap-space-lg">
         <div className="flex items-center gap-space-lg">
           <div className="flex items-center gap-space-md">
-            <div className="w-9 h-9 rounded-xl bg-[#0284c7] flex items-center justify-center text-white shadow-[0_2px_8px_rgba(2,132,199,0.3)]">
+            <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(178,58,112,0.3)]">
               <MaterialIcon name="menu_book" className="text-[20px]" />
             </div>
             <div>
@@ -14,7 +14,7 @@ export function AppHeader({ header, onOpenActivity, onOpenRoles, onSignOut }) {
                 <span className="font-headline-sm text-headline-sm text-slate-900 font-bold tracking-tight">
                   QuranBest
                 </span>
-                <span className="font-label-sm text-label-sm text-[#0284c7] uppercase bg-sky-50 px-space-xs py-0.5 rounded border border-sky-200 font-semibold">
+                <span className="font-label-sm text-label-sm text-brand-600 uppercase bg-brand-50 px-space-xs py-0.5 rounded border border-brand-200 font-semibold">
                   Akademi
                 </span>
               </div>
@@ -23,9 +23,9 @@ export function AppHeader({ header, onOpenActivity, onOpenRoles, onSignOut }) {
           </div>
         </div>
         <div className="flex items-center gap-space-md">
-          <div className="hidden md:flex items-center gap-space-xs px-space-md py-1 rounded-full bg-sky-50 border border-sky-200">
-            <span className={`w-2 h-2 rounded-full ${header.isLive ? "bg-teal-500" : "bg-[#0284c7]"} animate-pulse`} />
-            <span className="font-label-sm text-label-sm text-[#0369a1] font-semibold">{header.syncLabel}</span>
+          <div className="hidden md:flex items-center gap-space-xs px-space-md py-1 rounded-full bg-brand-50 border border-brand-200">
+            <span className={`w-2 h-2 rounded-full ${header.isLive ? "bg-teal-500" : "bg-brand-600"} animate-pulse`} />
+            <span className="font-label-sm text-label-sm text-brand-700 font-semibold">{header.syncLabel}</span>
           </div>
           <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
           <div className="flex items-center gap-space-sm pl-space-xs">
@@ -46,8 +46,8 @@ export function AppHeader({ header, onOpenActivity, onOpenRoles, onSignOut }) {
               </p>
               <p className="font-label-sm text-label-sm text-slate-500 font-medium">{header.adminRole}</p>
             </div>
-            <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-[#0284c7] border border-sky-300 font-semibold">
-              <MaterialIcon name="person" className="text-[#0284c7] text-[18px]" />
+            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 border border-brand-300 font-semibold">
+              <MaterialIcon name="person" className="text-brand-600 text-[18px]" />
             </div>
           </div>
           {onOpenActivity && (

@@ -2,7 +2,7 @@ export function InfaqCard({ infaq }) {
   return (
     <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-white border border-slate-200">
       <div className="flex items-center justify-between">
-        <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-[#0284c7]">
+        <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-brand-600">
           Pemenuhan Infaq Komitmen
         </span>
         <span className="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full tabular-nums bg-rose-50 text-rose-700 border border-rose-200">
@@ -23,10 +23,10 @@ export function InfaqCard({ infaq }) {
       </div>
       <div className="space-y-space-sm">
         <div className="w-full h-2.5 rounded-full overflow-hidden bg-slate-100">
-          <div className="h-full rounded-full transition-all duration-500 bg-[#0284c7]" style={{ width: infaq.barWidth }} />
+          <div className="h-full rounded-full transition-all duration-500 bg-brand-600" style={{ width: infaq.barWidth }} />
         </div>
         <div className="flex items-center justify-between font-label-sm text-label-sm">
-          <span className="font-semibold tabular-nums text-[#0369a1]">{infaq.validAmount}</span>
+          <span className="font-semibold tabular-nums text-brand-700">{infaq.validAmount}</span>
           <span className="tabular-nums text-rose-600 font-semibold">{infaq.gapAmount}</span>
         </div>
       </div>

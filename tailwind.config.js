@@ -5,6 +5,22 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Tema utama pink soft. Kontras sudah dicek WCAG AA:
+        // putih di atas 600 = 5.6:1, teks 600 di atas 50 = 5.2:1, teks 700 di atas 50 = 7.1:1.
+        // Untuk teks kecil di latar terang pakai 600 ke atas; 300–500 hanya untuk dot, border, aksen.
+        brand: {
+          bg: "#fdf8fa",
+          50: "#fdf2f7",
+          100: "#fbe6ef",
+          200: "#f6cddf",
+          300: "#eea8c7",
+          400: "#e07ba7",
+          500: "#cc5689",
+          600: "#b23a70",
+          700: "#93295a",
+          800: "#76234b",
+          900: "#5f1f3e",
+        },
         "tertiary-fixed": "#acedff",
         "on-error": "#ffffff",
         "on-surface-variant": "#3f4850",

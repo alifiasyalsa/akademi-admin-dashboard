@@ -74,6 +74,8 @@ export function MessageTemplateModal({
   isOpen,
   onClose,
   category = "registrasi", // 'registrasi' | 'monitoring'
+  // Nilai filter aktif (mis. { pekan, batch }) menimpa SAMPLE_DATA di pratinjau
+  previewData = null,
   templates = [],
   onTemplatesChange,
   onShowToast,
@@ -176,10 +178,16 @@ export function MessageTemplateModal({
   }
 
   // Pratinjau teks WhatsApp dengan substitusi data contoh riil secara live
+  const previewPekan = previewData?.pekan;
+  const previewBatch = previewData?.batch;
   const livePreviewContent = useMemo(() => {
-    const sample = SAMPLE_DATA[category] || {};
+    const sample = {
+      ...(SAMPLE_DATA[category] || {}),
+      ...(previewPekan ? { pekan: String(previewPekan) } : {}),
+      ...(previewBatch ? { batch: String(previewBatch) } : {}),
+    };
     return templateService.interpolate(editContent || "", sample);
-  }, [editContent, category]);
+  }, [editContent, category, previewPekan, previewBatch]);
 
   async function handleSetDefaultQuick(template, e) {
     e?.stopPropagation();
@@ -321,7 +329,7 @@ export function MessageTemplateModal({
         {/* 1. Header Dialog */}
         <div className="px-6 py-3.5 flex items-center justify-between border-b border-slate-100 bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0284c7] flex items-center justify-center border border-sky-100 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shadow-xs">
               <MaterialIcon name="chat" className="text-[22px]" />
             </div>
             <div>
@@ -357,7 +365,7 @@ export function MessageTemplateModal({
                   }}
                   className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? "bg-white text-[#0284c7] shadow-xs border border-slate-200/80 font-bold"
+                      ? "bg-white text-brand-600 shadow-xs border border-slate-200/80 font-bold"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
                   }`}
                 >
@@ -379,7 +387,7 @@ export function MessageTemplateModal({
               <button
                 type="button"
                 onClick={handleAddNew}
-                className="text-xs font-semibold text-[#0284c7] hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-brand-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <MaterialIcon name="add" className="text-[16px]" />
                 Tambah Baru
@@ -399,7 +407,7 @@ export function MessageTemplateModal({
                     onClick={() => handleSelectTemplate(template)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
                       isSelected
-                        ? "bg-white border-[#0284c7] shadow-sm ring-1.5 ring-[#0284c7]/20"
+                        ? "bg-white border-brand-600 shadow-sm ring-1.5 ring-brand-600/20"
                         : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/80"
                     }`}
                   >
@@ -414,7 +422,7 @@ export function MessageTemplateModal({
                       </div>
 
                       {template.is_default && (
-                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-[#0284c7] border border-sky-200 shrink-0">
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-50 text-brand-600 border border-brand-200 shrink-0">
                           Aktif
                         </span>
                       )}
@@ -425,12 +433,12 @@ export function MessageTemplateModal({
                         <button
                           type="button"
                           onClick={(e) => handleSetDefaultQuick(template, e)}
-                          className="text-[#0284c7] hover:underline font-semibold cursor-pointer"
+                          className="text-brand-600 hover:underline font-semibold cursor-pointer"
                         >
                           Jadikan Default
                         </button>
                       ) : (
-                        <span className="text-[#0284c7] font-semibold flex items-center gap-0.5">
+                        <span className="text-brand-600 font-semibold flex items-center gap-0.5">
                           <MaterialIcon name="check" className="text-[13px]" /> Dipakai 1-Klik
                         </span>
                       )}
@@ -455,7 +463,7 @@ export function MessageTemplateModal({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <MaterialIcon name="edit_note" className="text-[18px] text-[#0284c7]" />
+                  <MaterialIcon name="edit_note" className="text-[18px] text-brand-600" />
                   {selectedTemplateId === "new" ? "Buat Template Baru" : "Edit Teks Pesan"}
                 </span>
                 {selectedTemplateId === "new" && (
@@ -479,7 +487,7 @@ export function MessageTemplateModal({
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   placeholder="Contoh: Pengingat Formal"
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0284c7] bg-white text-slate-900"
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 bg-white text-slate-900"
                 />
               </div>
 
@@ -497,10 +505,10 @@ export function MessageTemplateModal({
                       key={v.key}
                       type="button"
                       onClick={() => insertVariable(v.key)}
-                      className="px-2 py-1 rounded-md text-[11px] font-mono bg-white hover:bg-sky-50 text-[#0284c7] border border-slate-200 hover:border-sky-300 shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                      className="px-2 py-1 rounded-md text-[11px] font-mono bg-white hover:bg-brand-50 text-brand-600 border border-slate-200 hover:border-brand-300 shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                       title={v.label}
                     >
-                      <span className="text-sky-500 font-bold">+</span>
+                      <span className="text-brand-600 font-bold">+</span>
                       <span>{`{${v.key}}`}</span>
                     </button>
                   ))}
@@ -517,7 +525,7 @@ export function MessageTemplateModal({
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   placeholder="Ketik format pesan WhatsApp di sini..."
-                  className="w-full text-xs font-sans px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0284c7] bg-white text-slate-900 leading-relaxed"
+                  className="w-full text-xs font-sans px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 bg-white text-slate-900 leading-relaxed"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
                   Mendukung format WhatsApp: <code>*tebal*</code>, <code>_miring_</code>, <code>~coret~</code>, dan <code>&gt; kutipan</code>.
@@ -531,10 +539,10 @@ export function MessageTemplateModal({
             <div>
               <div className="flex items-center justify-between pb-2">
                 <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <MaterialIcon name="smartphone" className="text-[18px] text-[#0284c7]" />
+                  <MaterialIcon name="smartphone" className="text-[18px] text-brand-600" />
                   Pratinjau Pesan WA
                 </span>
-                <span className="text-[10px] font-semibold text-[#0284c7] bg-sky-100/80 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold text-brand-600 bg-brand-100/80 px-2 py-0.5 rounded-full">
                   Live Preview
                 </span>
               </div>
@@ -542,7 +550,7 @@ export function MessageTemplateModal({
               {/* WhatsApp Phone Mockup Card */}
               <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-300/80 bg-white">
                 {/* Header WA Biru Sistem */}
-                <div className="bg-[#0284c7] text-white px-3.5 py-2.5 flex items-center justify-between shadow-xs">
+                <div className="bg-brand-600 text-white px-3.5 py-2.5 flex items-center justify-between shadow-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <MaterialIcon name="arrow_back" className="text-[18px] text-white/90 shrink-0 cursor-pointer" />
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs text-white border border-white/30 shrink-0">
@@ -552,8 +560,8 @@ export function MessageTemplateModal({
                       <p className="text-xs font-bold leading-tight truncate">
                         Ahmad Fauzi
                       </p>
-                      <p className="text-[10px] text-sky-100 flex items-center gap-1 font-normal">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-200"></span> online
+                      <p className="text-[10px] text-brand-100 flex items-center gap-1 font-normal">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-200"></span> online
                       </p>
                     </div>
                   </div>
@@ -582,7 +590,7 @@ export function MessageTemplateModal({
 
                   {/* Speech Bubble WhatsApp */}
                   <div className="flex justify-end my-1">
-                    <div className="relative bg-white text-slate-900 rounded-lg rounded-tr-none px-3.5 py-2.5 shadow-xs max-w-[94%] border border-sky-100">
+                    <div className="relative bg-white text-slate-900 rounded-lg rounded-tr-none px-3.5 py-2.5 shadow-xs max-w-[94%] border border-brand-100">
                       {/* Ekor Bubble */}
                       <div
                         className="absolute -top-[1px] -right-[6px] w-0 h-0"
@@ -603,7 +611,7 @@ export function MessageTemplateModal({
                       {/* Waktu & Centang Biru Ganda */}
                       <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500 mt-1 select-none">
                         <span>10:45</span>
-                        <span className="text-[#0284c7] font-bold text-[12px] leading-none tracking-tighter">
+                        <span className="text-brand-600 font-bold text-[12px] leading-none tracking-tighter">
                           ✓✓
                         </span>
                       </div>
@@ -620,7 +628,7 @@ export function MessageTemplateModal({
                         <MaterialIcon name="photo_camera" className="text-[16px]" />
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-[#0284c7] text-white flex items-center justify-center shadow-xs shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-xs shrink-0">
                       <MaterialIcon name="mic" className="text-[16px]" />
                     </div>
                   </div>
@@ -635,7 +643,7 @@ export function MessageTemplateModal({
                   type="checkbox"
                   checked={isDefaultChecked}
                   onChange={(e) => setIsDefaultChecked(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#0284c7] focus:ring-[#0284c7] cursor-pointer accent-[#0284c7]"
+                  className="w-4 h-4 rounded text-brand-600 focus:ring-brand-600 cursor-pointer accent-brand-600"
                 />
                 <span className="font-semibold text-xs text-slate-800">
                   Jadikan Template Default (Dipakai 1-Klik Kirim WA)
@@ -646,7 +654,7 @@ export function MessageTemplateModal({
                 type="button"
                 disabled={saving}
                 onClick={handleSaveTemplate}
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-[#0284c7] hover:bg-[#0369a1] shadow-md shadow-sky-600/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-600/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 <MaterialIcon name="save" className="text-[18px]" />
                 <span>{saving ? "Menyimpan ke Supabase..." : "Simpan Template"}</span>

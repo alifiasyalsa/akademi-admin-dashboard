@@ -21,14 +21,14 @@ export function RegistrasiRow({ participant, onActionClick }) {
   // Badge Tipe Registrasi styling
   let tipeBadgeClass = "bg-slate-100 text-slate-700 border-slate-200";
   if (tipe === "Promoted") {
-    tipeBadgeClass = "bg-sky-50 text-[#0284c7] border-sky-200";
+    tipeBadgeClass = "bg-brand-50 text-brand-600 border-brand-200";
   } else if (tipe === "New") {
     tipeBadgeClass = "bg-teal-50 text-teal-700 border-teal-200";
   }
 
   // Styling badge status registrasi CMS
-  let regBadgeStyle = "bg-sky-50 text-sky-800 border-sky-200";
-  let regDotStyle = "bg-sky-500";
+  let regBadgeStyle = "bg-brand-50 text-brand-800 border-brand-200";
+  let regDotStyle = "bg-brand-500";
   if (regStatusTone === "amber") {
     regBadgeStyle = "bg-amber-50 text-amber-800 border-amber-300";
     regDotStyle = "bg-amber-500";
@@ -87,7 +87,7 @@ export function RegistrasiRow({ participant, onActionClick }) {
       <td className="py-space-md px-space-md">
         {kelas && kelas !== "none" ? (
           <span className="inline-flex items-center gap-1 font-label-sm text-label-sm font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-700 border border-slate-200">
-            <MaterialIcon name="school" className="text-[14px] text-[#0284c7]" />
+            <MaterialIcon name="school" className="text-[14px] text-brand-600" />
             {kelas}
           </span>
         ) : (
@@ -106,8 +106,8 @@ export function RegistrasiRow({ participant, onActionClick }) {
               {statusLabel || "Perlu follow-up (>3 hr)"}
             </span>
           ) : status === "reminded" ? (
-            <span className="inline-flex items-center gap-1.5 font-label-sm text-label-sm font-semibold px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7]" />
+            <span className="inline-flex items-center gap-1.5 font-label-sm text-label-sm font-semibold px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-800 border border-brand-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
               {statusLabel || "Sudah diingatkan"}
             </span>
           ) : (
@@ -149,7 +149,7 @@ export function RegistrasiRow({ participant, onActionClick }) {
           <button
             type="button"
             onClick={() => onActionClick(participant)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-[#0284c7] hover:bg-[#0369a1] text-white shadow-sky-200 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200 cursor-pointer"
           >
             <MaterialIcon name="chat" className="text-[16px]" />
             <span>Kirim WA</span>

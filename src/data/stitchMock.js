@@ -42,14 +42,14 @@ export const stitchMock = {
     weekBadge: "Pekan 4 / 4",
     studentCount: 42,
     bar: [
-      { key: "hadir", width: "90.5%", className: "bg-[#0284c7]", title: "Hadir: 38" },
-      { key: "izin", width: "7.1%", className: "bg-sky-300", title: "Izin: 3" },
+      { key: "hadir", width: "90.5%", className: "bg-brand-600", title: "Hadir: 38" },
+      { key: "izin", width: "7.1%", className: "bg-brand-300", title: "Izin: 3" },
       { key: "sakit", width: "2.4%", className: "bg-amber-300", title: "Sakit: 1" },
       { key: "alpa", width: "0%", className: "bg-rose-300", title: "Alpa: 0" },
     ],
     legend: [
-      { label: "38 Hadir", dotClass: "bg-[#0284c7]", textClass: "font-medium" },
-      { label: "3 Izin", dotClass: "bg-sky-400", textClass: "font-medium" },
+      { label: "38 Hadir", dotClass: "bg-brand-600", textClass: "font-medium" },
+      { label: "3 Izin", dotClass: "bg-brand-400", textClass: "font-medium" },
       { label: "1 Sakit", dotClass: "bg-amber-400", textClass: "font-medium" },
       { label: "0 Alpa", dotClass: "bg-slate-300", textClass: "text-slate-400 font-medium" },
     ],

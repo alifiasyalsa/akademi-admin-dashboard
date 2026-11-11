@@ -5,11 +5,11 @@ export function AppFooter({ footer }) {
         <div className="flex items-center gap-space-sm text-slate-500 font-body-sm text-body-sm">
           <span>{footer.copyright}</span>
           <span className="text-slate-300">•</span>
-          <span className="text-[#0284c7] font-label-sm text-label-sm font-semibold">{footer.version}</span>
+          <span className="text-brand-600 font-label-sm text-label-sm font-semibold">{footer.version}</span>
         </div>
         <div className="flex items-center gap-space-lg font-label-sm text-label-sm text-slate-500">
           <span className="flex items-center gap-1 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
             {footer.server}
           </span>
           <span className="text-slate-500 hover:text-slate-800 transition-colors">{footer.help}</span>

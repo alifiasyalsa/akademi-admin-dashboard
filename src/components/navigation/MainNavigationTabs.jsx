@@ -14,7 +14,7 @@ export function MainNavigationTabs({
           onClick={() => onTabChange("monitoring")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all cursor-pointer ${
             activeTab === "monitoring"
-              ? "bg-[#0284c7] text-white shadow-sm"
+              ? "bg-brand-600 text-white shadow-sm"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
           }`}
         >
@@ -27,7 +27,7 @@ export function MainNavigationTabs({
           onClick={() => onTabChange("registrasi")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all cursor-pointer ${
             activeTab === "registrasi"
-              ? "bg-[#0284c7] text-white shadow-sm"
+              ? "bg-brand-600 text-white shadow-sm"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
           }`}
         >

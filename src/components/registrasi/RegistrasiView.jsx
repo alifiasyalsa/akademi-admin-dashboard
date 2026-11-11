@@ -4,7 +4,7 @@ import { tokenManager } from "../../api/tokenManager.js";
 import { buildRegistrasiViewModel, EMPTY_SUMMARY } from "../../services/registrasiService.js";
 import { reminderTrackingService } from "../../services/reminderTrackingService.js";
 import { templateService, DEFAULT_TEMPLATES } from "../../services/templateService.js";
-import { buildWaMessage, openWhatsAppDirectly } from "../../services/waService.js";
+import { buildWaMessage, openWhatsAppDirectly, cleanBatchLabel } from "../../services/waService.js";
 import { registrationMockData } from "../../data/registrationMock.js";
 import { RegistrasiSummaryGrid } from "./RegistrasiSummaryGrid.jsx";
 import { RegistrasiTable } from "./RegistrasiTable.jsx";
@@ -246,7 +246,7 @@ export function RegistrasiView({
     if (activeTemplate && activeTemplate.content) {
       message = templateService.interpolate(activeTemplate.content, {
         nama: participant.name || "Sahabat",
-        batch: batchDisplay,
+        batch: cleanBatchLabel(batchDisplay),
         rekomendasi_kelas: participant.kelas && participant.kelas !== "none" ? participant.kelas : "Belum ditentukan",
         tipe: participant.tipe || "Pendaftar",
         status: participant.regStatusLabel || "Belum Pilih Kelas",
@@ -314,7 +314,7 @@ export function RegistrasiView({
           <button
             type="button"
             onClick={handleRefresh}
-            className="text-[#0284c7] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+            className="text-brand-600 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
           >
             Segarkan Sekarang
           </button>
@@ -343,6 +343,7 @@ export function RegistrasiView({
         isOpen={isTemplateModalOpen}
         onClose={() => setIsTemplateModalOpen(false)}
         category="registrasi"
+        previewData={{ batch: cleanBatchLabel(batchDisplay) }}
         templates={templates}
         onTemplatesChange={setTemplates}
         onShowToast={onShowToast}

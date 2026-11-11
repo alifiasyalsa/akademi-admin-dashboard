@@ -46,7 +46,7 @@ export function TableToolbar({
           <div className="relative w-48 lg:w-56">
             <MaterialIcon name="search" className="absolute left-2.5 top-2 text-[16px] pointer-events-none text-slate-400" />
             <input
-              className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0284c7] bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400"
+              className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400"
               placeholder="Cari santri/kontak..."
               type="text"
               value={searchQuery}
@@ -73,7 +73,7 @@ export function TableToolbar({
                 type="button"
                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                   isActive
-                    ? "bg-[#0284c7] text-white border-[#0284c7]"
+                    ? "bg-brand-600 text-white border-brand-600"
                     : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
                 }`}
                 onClick={() => onSubTabChange(sub.id)}

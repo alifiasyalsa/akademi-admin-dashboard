@@ -522,13 +522,13 @@ export function buildWorkbenchViewModel({
     weekBadge: `Pekan ${currentWeek} / ${numMeetings}`,
     studentCount: totalStudents,
     bar: [
-      { key: "hadir", width: percentOfTotal(countHadir), className: "bg-[#0284c7]", title: `Hadir: ${countHadir}` },
+      { key: "hadir", width: percentOfTotal(countHadir), className: "bg-brand-600", title: `Hadir: ${countHadir}` },
       { key: "tidak_hadir", width: percentOfTotal(countTidakHadir), className: "bg-amber-300", title: `Tidak Hadir: ${countTidakHadir}` },
       { key: "belum_diisi", width: percentOfTotal(countBelumDiisi), className: "bg-slate-300", title: `Belum Diisi: ${countBelumDiisi}` },
       { key: "belum_berjalan", width: percentOfTotal(countBelumBerjalan), className: "bg-slate-100", title: `Belum Berjalan: ${countBelumBerjalan}` },
     ],
     legend: [
-      { label: `${countHadir} Hadir`, dotClass: "bg-[#0284c7]", textClass: "font-medium" },
+      { label: `${countHadir} Hadir`, dotClass: "bg-brand-600", textClass: "font-medium" },
       { label: `${countTidakHadir} Tidak Hadir`, dotClass: "bg-amber-400", textClass: "font-medium" },
       ...(countBelumDiisi > 0
         ? [{ label: `${countBelumDiisi} Belum Diisi`, dotClass: "bg-slate-300", textClass: "text-slate-500 font-medium" }]

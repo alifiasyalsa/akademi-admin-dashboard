@@ -218,7 +218,7 @@ export const reminderTrackingService = {
       relativeTime,
       count,
       isStagnant: false,
-      badgeColor: "bg-sky-50 text-sky-800 border-sky-200",
+      badgeColor: "bg-brand-50 text-brand-800 border-brand-200",
     };
   },
 };

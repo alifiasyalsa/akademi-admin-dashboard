@@ -41,7 +41,7 @@ export const registrationMockData = {
       phone: "0813-9876-5432",
       rawPhone: "081398765432",
       tipe: "Promoted",
-      tipeTone: "sky", // bg-sky-50 text-[#0284c7] border-sky-200
+      tipeTone: "sky", // bg-brand-50 text-brand-600 border-brand-200
       kelas: "Tahsin Lanjutan A",
       status: "followup",
       statusLabel: "Perlu follow-up",

@@ -11,14 +11,14 @@ export function UnselectedClassCard({
     <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-white border border-slate-200 relative overflow-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-sky-50 text-[#0284c7] border border-sky-200 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center">
             <MaterialIcon name="calendar_today" className="text-[18px]" />
           </div>
-          <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-[#0284c7]">
+          <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-brand-600">
             Belum Memilih Kelas
           </span>
         </div>
-        <span className="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full bg-sky-50 text-[#0369a1] border border-sky-200">
+        <span className="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
           {batchLabel}
         </span>
       </div>
@@ -33,7 +33,7 @@ export function UnselectedClassCard({
           </span>
         </div>
         <div className="text-right">
-          <span className="font-headline-sm text-headline-sm font-bold tabular-nums text-[#0284c7]">
+          <span className="font-headline-sm text-headline-sm font-bold tabular-nums text-brand-600">
             {percentage}%
           </span>
         </div>
@@ -42,7 +42,7 @@ export function UnselectedClassCard({
       <div className="space-y-space-sm">
         <div className="w-full h-2 rounded-full overflow-hidden bg-slate-100">
           <div
-            className="h-full rounded-full transition-all duration-500 bg-[#0284c7]"
+            className="h-full rounded-full transition-all duration-500 bg-brand-600"
             style={{ width: `${percentage}%` }}
           />
         </div>

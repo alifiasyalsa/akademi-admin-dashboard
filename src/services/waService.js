@@ -4,12 +4,21 @@ import { formatWaPhone } from "./formatters.js";
  * Service Template Pesan WhatsApp Resmi Akademi QuranBest
  */
 
+/**
+ * Label batch bersih untuk isi pesan, karena template menulis "Batch {batch}" sendiri.
+ * Contoh: "Batch 16 (Aktif)" -> "16", "Telkom MDI #7" -> "Telkom MDI #7".
+ */
+export function cleanBatchLabel(batchName, fallback = "16") {
+  return (
+    String(batchName || "")
+      .replace(/^Batch\s*/i, "")
+      .replace(/\s*\(.*\)$/, "")
+      .trim() || fallback
+  );
+}
+
 export function buildWaMessage({ waType, student, batchName, regUrl }) {
-  // Ambil label batch yang bersih (misal: "Batch 16 (Aktif)" -> "16", atau "Telkom MDI #7" -> "Telkom MDI #7")
-  const cleanBatch = String(batchName || "16")
-    .replace(/^Batch\s*/i, "")
-    .replace(/\s*\(.*\)$/, "")
-    .trim() || "16";
+  const cleanBatch = cleanBatchLabel(batchName);
 
   const greeting = student?.name ? `Assalamualaikum Kak ${student.name} 📖✨` : "Assalamualaikum Kak 📖✨";
   const targetRegUrl = regUrl || "https://qbest.id/Pilih-Kelas";
@@ -89,12 +98,15 @@ Klik di sini 👇
 }
 
 /**
- * Membuat tautan wa.me lengkap dengan query text yang di-encode
+ * Membuat tautan kirim WhatsApp lengkap dengan query text yang di-encode.
+ * Sengaja tidak memakai wa.me: redirect wa.me → api.whatsapp.com meng-encode ulang teks
+ * dan merusak emoji 4-byte (📖 🤲 😊 👉) menjadi "�" di WhatsApp Web/Desktop.
  */
 export function buildWaUrl({ phone, message }) {
   const cleanPhone = formatWaPhone(phone);
   if (!cleanPhone) return "";
-  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  const params = new URLSearchParams({ phone: cleanPhone, text: message.normalize("NFC") });
+  return `https://api.whatsapp.com/send?${params.toString().replace(/\+/g, "%20")}`;
 }
 
 /**

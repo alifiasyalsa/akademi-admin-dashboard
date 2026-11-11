@@ -17,7 +17,7 @@ export function ReminderConfirmModal({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0284c7] border border-sky-200 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center">
               <MaterialIcon name="mark_chat_read" className="text-[22px]" />
             </div>
             <div>
@@ -49,7 +49,7 @@ export function ReminderConfirmModal({
           </p>
 
           <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-slate-600 font-body-sm text-body-sm space-y-1.5">
-            <div className="flex items-center gap-1.5 font-label-sm text-label-sm font-semibold text-[#0284c7]">
+            <div className="flex items-center gap-1.5 font-label-sm text-label-sm font-semibold text-brand-600">
               <MaterialIcon name="drafts" className="text-[16px]" />
               <span>Pratinjau Pesan Terkirim:</span>
             </div>
@@ -78,7 +78,7 @@ export function ReminderConfirmModal({
           <button
             type="button"
             onClick={() => onConfirm(participant)}
-            className="px-4 py-2 rounded-lg font-label-md text-label-md font-semibold text-white bg-[#0284c7] hover:bg-[#0369a1] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-lg font-label-md text-label-md font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <MaterialIcon name="check_circle" className="text-[18px]" />
             <span>Ya, tandai sudah dikirim</span>

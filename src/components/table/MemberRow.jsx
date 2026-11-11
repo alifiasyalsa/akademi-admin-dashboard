@@ -2,23 +2,23 @@ import { MaterialIcon } from "../MaterialIcon.jsx";
 import { formatRupiah } from "../../services/formatters.js";
 
 const PRESENCE_DOT = {
-  hadir: "bg-[#0284c7]",
+  hadir: "bg-brand-600",
   tidakHadir: "bg-amber-400",
   belumBerjalan: "bg-slate-200 border border-slate-300",
   belumDiisi: "bg-white border border-dashed border-slate-400",
   absen: "bg-amber-400",
   sakit: "bg-amber-400",
-  izin: "bg-sky-400",
+  izin: "bg-brand-400",
 };
 
 const PRESENCE_BADGE = {
   hadir: {
-    wrap: "bg-sky-50 text-[#0369a1] border-sky-200",
-    dot: "bg-[#0284c7]",
+    wrap: "bg-brand-50 text-brand-700 border-brand-200",
+    dot: "bg-brand-600",
   },
   izin: {
-    wrap: "bg-sky-50 text-[#0369a1] border-sky-200",
-    dot: "bg-sky-400",
+    wrap: "bg-brand-50 text-brand-700 border-brand-200",
+    dot: "bg-brand-400",
   },
   sakit: {
     wrap: "bg-amber-50 text-amber-800 border-amber-200",
@@ -42,7 +42,7 @@ const VALID_NOTE = {
   overdue: "font-semibold text-rose-600 text-[11px] leading-[14px]",
   paid: "font-semibold text-teal-600 text-[11px] leading-[14px]",
   none: "font-semibold text-rose-600 text-[11px] leading-[14px]",
-  advance: "font-semibold text-[#0284c7] text-[11px] leading-[14px]",
+  advance: "font-semibold text-brand-600 text-[11px] leading-[14px]",
 };
 
 const VALID_AMOUNT = {
@@ -59,7 +59,7 @@ function ContactCountPill({ label, followup }) {
       ? "bg-slate-50 text-slate-400 border-slate-200"
       : total >= 3
       ? "bg-amber-50 text-amber-800 border-amber-200"
-      : "bg-sky-50 text-[#0369a1] border-sky-200";
+      : "bg-brand-50 text-brand-700 border-brand-200";
   const title = [`${label} dihubungi total ${total}x`, ...(followup?.breakdown || [])].join("\n");
   return (
     <span
@@ -114,7 +114,7 @@ function ActionCell({ student, onSendWa }) {
     return (
       <div className="flex items-center justify-end gap-1.5">
         {student.actions.map((action) => {
-          let btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-[#0284c7] hover:bg-[#0369a1] text-white shadow-sky-200";
+          let btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200";
           if (action.variant === "amber") {
             btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-200";
           } else if (action.variant === "secondary") {
@@ -152,14 +152,14 @@ function ActionCell({ student, onSendWa }) {
 
   const className = {
     primary:
-      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-[#0284c7] hover:bg-[#0369a1] text-white shadow-sky-200",
+      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200",
     indigo:
       "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-100",
     secondary:
       "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-medium shadow-sm transition-all active:scale-95 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300",
     amber:
       "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200",
-  }[action.variant] || "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold bg-[#0284c7] text-white";
+  }[action.variant] || "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold bg-brand-600 text-white";
 
   return (
     <button
@@ -256,7 +256,7 @@ export function MemberRow({ student, onSendWa, onManualInfaq }) {
             <button
               type="button"
               onClick={() => onManualInfaq(student)}
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[11px] font-semibold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[11px] font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-colors cursor-pointer"
               title="Input manual transaksi infaq"
             >
               <MaterialIcon name="add" className="text-[14px]" />

@@ -2,10 +2,10 @@ export function AttendanceCard({ attendance }) {
   return (
     <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-white border border-slate-200">
       <div className="flex items-center justify-between">
-        <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-[#0284c7]">
+        <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-brand-600">
           Partisipasi & Presensi Pekan Ini
         </span>
-        <span className="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full bg-sky-50 text-[#0369a1] border border-sky-200">
+        <span className="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
           {attendance.weekBadge}
         </span>
       </div>

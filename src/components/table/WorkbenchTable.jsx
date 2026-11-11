@@ -39,6 +39,41 @@ function matchesFilters(student, activeTab, activeSubTab, searchQuery) {
   return matchesTab && matchesSubTab && matchesSearch;
 }
 
+const SORT_FIELDS = {
+  valid: "validValue",
+};
+
+function SortableHeader({ label, sortKey, sortConfig, onToggle }) {
+  const dir = sortConfig.key === sortKey ? sortConfig.dir : null;
+  return (
+    <th
+      className="py-space-md px-space-md text-right font-semibold"
+      aria-sort={dir === "desc" ? "descending" : dir === "asc" ? "ascending" : "none"}
+    >
+      <button
+        type="button"
+        onClick={() => onToggle(sortKey)}
+        title={
+          dir === "desc"
+            ? "Urut terbesar → terkecil (klik: terkecil dulu)"
+            : dir === "asc"
+            ? "Urut terkecil → terbesar (klik: kembali ke urutan awal)"
+            : `Klik untuk urutkan ${label} dari terbesar`
+        }
+        className={`inline-flex items-center gap-0.5 uppercase tracking-wider font-semibold cursor-pointer hover:text-slate-900 transition-colors ${
+          dir ? "text-brand-600" : ""
+        }`}
+      >
+        {label}
+        <MaterialIcon
+          name={dir === "desc" ? "arrow_downward" : dir === "asc" ? "arrow_upward" : "unfold_more"}
+          className="text-[14px]"
+        />
+      </button>
+    </th>
+  );
+}
+
 export function WorkbenchTable({
   table,
   selectedWeek,
@@ -55,6 +90,8 @@ export function WorkbenchTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [activeSubTab, setActiveSubTab] = useState("all");
+  // Sortir per kolom nominal: klik → "desc" (terbesar) → "asc" (terkecil) → null (urutan awal)
+  const [sortConfig, setSortConfig] = useState({ key: null, dir: null });
 
   const weekLabel = String(selectedWeek || table?.selectedWeek || 1).replace(/^p/i, "");
 
@@ -65,17 +102,29 @@ export function WorkbenchTable({
     setActiveSubTab("all");
   }, [activeTab]);
 
-  // Filter santri sesuai tab, sub-filter & query pencarian
+  // Filter santri sesuai tab, sub-filter & query pencarian, lalu sortir (ikut terbawa ke ekspor CSV)
   const visibleStudents = useMemo(() => {
-    return (table.students || []).filter((student) =>
+    const filtered = (table.students || []).filter((student) =>
       matchesFilters(student, activeTab, effectiveSubTab, searchQuery)
     );
-  }, [table.students, activeTab, effectiveSubTab, searchQuery]);
+    const field = SORT_FIELDS[sortConfig.key];
+    if (!field || !sortConfig.dir) return filtered;
+    const direction = sortConfig.dir === "desc" ? -1 : 1;
+    return [...filtered].sort((a, b) => direction * ((Number(a[field]) || 0) - (Number(b[field]) || 0)));
+  }, [table.students, activeTab, effectiveSubTab, searchQuery, sortConfig]);
 
-  // Reset ke halaman 1 saat filter tab, sub-filter, search query, atau dataset kelas berganti
+  // Reset ke halaman 1 saat filter tab, sub-filter, sortir, search query, atau dataset kelas berganti
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, effectiveSubTab, searchQuery, table]);
+  }, [activeTab, effectiveSubTab, searchQuery, sortConfig, table]);
+
+  function toggleSort(key) {
+    setSortConfig((prev) => {
+      if (prev.key !== key || !prev.dir) return { key, dir: "desc" };
+      if (prev.dir === "desc") return { key, dir: "asc" };
+      return { key: null, dir: null };
+    });
+  }
 
   function handleExportCsv() {
     const tabLabel = (table.tabs || []).find((tab) => tab.id === activeTab)?.label || activeTab;
@@ -150,9 +199,9 @@ export function WorkbenchTable({
           <button
             type="button"
             onClick={onOpenTemplates}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-[#0284c7] bg-sky-50 hover:bg-sky-100 border border-sky-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
           >
-            <MaterialIcon name="chat" className="text-[18px] text-[#0284c7]" />
+            <MaterialIcon name="chat" className="text-[18px] text-brand-600" />
             <span>Pengaturan Template WA</span>
           </button>
         </div>
@@ -179,7 +228,7 @@ export function WorkbenchTable({
               <th className="py-space-md px-space-md font-semibold">Hari</th>
               <th className="py-space-md px-space-md font-semibold">Historis (8 Pk)</th>
               <th className="py-space-md px-space-md text-right font-semibold">Kewajiban</th>
-              <th className="py-space-md px-space-md text-right font-semibold">Valid Masuk</th>
+              <SortableHeader label="Valid Masuk" sortKey="valid" sortConfig={sortConfig} onToggle={toggleSort} />
               <th className="py-space-md px-space-md font-semibold" title="Tanggal pengingat terakhir & total berapa kali dihubungi">
                 Follow-up (Terakhir · Total)
               </th>

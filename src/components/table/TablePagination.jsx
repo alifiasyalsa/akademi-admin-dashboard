@@ -43,7 +43,7 @@ export function TablePagination({
             value={pageSize}
             aria-label="Pilih jumlah baris per halaman"
             onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-            className="bg-white border border-slate-300 rounded px-2 py-0.5 text-slate-700 text-xs font-semibold focus:outline-none focus:border-[#0284c7] cursor-pointer shadow-sm"
+            className="bg-white border border-slate-300 rounded px-2 py-0.5 text-slate-700 text-xs font-semibold focus:outline-none focus:border-brand-600 cursor-pointer shadow-sm"
           >
             {pageSizeOptions.map((opt) => (
               <option key={opt} value={opt}>
@@ -85,7 +85,7 @@ export function TablePagination({
               onClick={() => onPageChange?.(num)}
               className={`min-w-[32px] px-2.5 py-1 rounded font-bold shadow-sm transition-colors text-center cursor-pointer ${
                 isCurrent
-                  ? "bg-[#0284c7] text-white border border-[#0284c7]"
+                  ? "bg-brand-600 text-white border border-brand-600"
                   : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
               }`}
             >

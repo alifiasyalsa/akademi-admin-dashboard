@@ -84,7 +84,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0284c7] border border-sky-200 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center">
               <MaterialIcon name="add_card" className="text-[22px]" />
             </div>
             <div>
@@ -107,7 +107,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
         {/* Rincian Valid Masuk */}
         <div className="py-4 space-y-4">
           <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 font-body-sm text-body-sm space-y-1.5">
-            <div className="flex items-center gap-1.5 font-label-sm text-label-sm font-semibold text-[#0284c7]">
+            <div className="flex items-center gap-1.5 font-label-sm text-label-sm font-semibold text-brand-600">
               <MaterialIcon name="receipt_long" className="text-[16px]" />
               <span>Rincian Valid Masuk</span>
             </div>
@@ -129,7 +129,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
                   value={amount ? amountNumber.toLocaleString("id-ID") : ""}
                   onChange={(event) => setAmount(event.target.value.replace(/\D/g, ""))}
                   placeholder="15.000"
-                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0284c7]"
+                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600"
                 />
               </label>
               <label className="block">
@@ -139,7 +139,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
                   value={transactionDate}
                   max={todayIso()}
                   onChange={(event) => setTransactionDate(event.target.value)}
-                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284c7]"
+                  className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
                 />
               </label>
             </div>
@@ -150,7 +150,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Mis. transfer ke rekening BSI, bukti via WA"
-                className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284c7]"
+                className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
               />
             </label>
 
@@ -172,7 +172,7 @@ export function ManualInfaqModal({ isOpen, student, batchLabel, onClose, onSubmi
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 rounded-lg font-label-md text-label-md font-semibold text-white bg-[#0284c7] hover:bg-[#0369a1] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                className="px-4 py-2 rounded-lg font-label-md text-label-md font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
                 <MaterialIcon name={saving ? "hourglass_top" : "save"} className="text-[18px]" />
                 <span>{saving ? "Menyimpan..." : "Simpan Transaksi"}</span>

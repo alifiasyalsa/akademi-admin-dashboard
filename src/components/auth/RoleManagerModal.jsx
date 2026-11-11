@@ -97,13 +97,13 @@ export function RoleManagerModal({ isOpen, currentUser, onClose, onShowToast }) 
               value={newEmail}
               onChange={(event) => setNewEmail(event.target.value)}
               placeholder="nama@gmail.com"
-              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284c7]"
+              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
             />
           </label>
           <select
             value={newRole}
             onChange={(event) => setNewRole(event.target.value)}
-            className="text-sm px-2.5 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284c7] cursor-pointer"
+            className="text-sm px-2.5 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600 cursor-pointer"
           >
             {Object.entries(ROLES).map(([id, meta]) => (
               <option key={id} value={id}>
@@ -114,7 +114,7 @@ export function RoleManagerModal({ isOpen, currentUser, onClose, onShowToast }) 
           <button
             type="submit"
             disabled={Boolean(busyEmail)}
-            className="px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-[#0284c7] hover:bg-[#0369a1] shadow-sm transition-all cursor-pointer disabled:opacity-60"
+            className="px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-sm transition-all cursor-pointer disabled:opacity-60"
           >
             Simpan
           </button>

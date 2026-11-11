@@ -24,10 +24,10 @@ export function GlobalFilterBar({
     <section className="bg-white rounded-xl p-space-lg shadow-sm border border-slate-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
         <div className="flex items-center gap-space-md">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-sky-50 text-[#0284c7] border border-sky-200">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-brand-50 text-brand-600 border border-brand-200">
             <MaterialIcon
               name={isRegistrasi ? "space_dashboard" : "grid_view"}
-              className="text-[26px] text-[#0284c7]"
+              className="text-[26px] text-brand-600"
             />
           </div>
           <div>
@@ -35,8 +35,8 @@ export function GlobalFilterBar({
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-slate-500 font-semibold">
                 Active Control Plane
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7]" />
-              <span className="font-label-sm text-label-sm font-semibold text-[#0284c7]">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
+              <span className="font-label-sm text-label-sm font-semibold text-brand-600">
                 Live Monitor
               </span>
             </div>

@@ -48,16 +48,16 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
   }
 
   return (
-    <main className="min-h-screen bg-[#f8f9ff] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-brand-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-space-md mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[#0284c7] flex items-center justify-center text-white shadow-[0_2px_8px_rgba(2,132,199,0.3)]">
+          <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(178,58,112,0.3)]">
             <MaterialIcon name="menu_book" className="text-[22px]" />
           </div>
           <div>
             <div className="flex items-center gap-space-sm">
               <span className="font-headline-sm text-headline-sm text-slate-900 font-bold tracking-tight">QuranBest</span>
-              <span className="font-label-sm text-label-sm text-[#0284c7] uppercase bg-sky-50 px-space-xs py-0.5 rounded border border-sky-200 font-semibold">
+              <span className="font-label-sm text-label-sm text-brand-600 uppercase bg-brand-50 px-space-xs py-0.5 rounded border border-brand-200 font-semibold">
                 Akademi
               </span>
             </div>
@@ -100,7 +100,7 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="nama@quranbest.id"
-              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284c7]"
+              className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
             />
           </label>
 
@@ -112,7 +112,7 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
                 autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="w-full text-sm pl-3 pr-9 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284c7]"
+                className="w-full text-sm pl-3 pr-9 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
               />
               <button
                 type="button"
@@ -135,7 +135,7 @@ export function LoginScreen({ onSignIn, onSignInWithGoogle, initialError = null 
           <button
             type="submit"
             disabled={submitting || redirecting}
-            className="w-full px-4 py-2.5 rounded-lg font-label-md text-label-md font-semibold text-white bg-[#0284c7] hover:bg-[#0369a1] shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+            className="w-full px-4 py-2.5 rounded-lg font-label-md text-label-md font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
           >
             <MaterialIcon name={submitting ? "hourglass_top" : "login"} className="text-[18px]" />
             <span>{submitting ? "Memproses..." : "Masuk"}</span>
