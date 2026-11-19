@@ -30,6 +30,32 @@ export const manualInfaqService = {
     return Array.isArray(rows) ? rows : [];
   },
 
+  /**
+   * Riwayat transaksi manual (lintas santri). Filter opsional per batch.
+   * @param {{ batchIds?: Array<string|number>, limit?: number }} [opts]
+   * @returns {Promise<Array<Object>>}
+   */
+  async fetchRecent({ batchIds = [], limit = 500 } = {}) {
+    const url = new URL(TABLE_URL);
+    url.searchParams.set("select", "*");
+    url.searchParams.set("order", "transaction_date.desc,created_at.desc");
+    url.searchParams.set("limit", String(Math.max(1, Math.min(Number(limit) || 500, 1000))));
+
+    const ids = (batchIds || []).map((id) => Number(id)).filter((n) => Number.isFinite(n));
+    if (ids.length === 1) {
+      url.searchParams.set("batch_id", `eq.${ids[0]}`);
+    } else if (ids.length > 1) {
+      url.searchParams.set("batch_id", `in.(${ids.join(",")})`);
+    }
+
+    const res = await fetch(url.toString(), { method: "GET", headers: getHeaders() });
+    if (!res.ok) {
+      throw new Error(`Gagal mengambil riwayat infaq manual (HTTP ${res.status})`);
+    }
+    const rows = await res.json();
+    return Array.isArray(rows) ? rows : [];
+  },
+
   async create({ memberId, memberName, batchId, classId, amount, transactionDate, notes }) {
     const user = supabaseAuth.getUser();
     const payload = {

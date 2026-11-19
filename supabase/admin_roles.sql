@@ -4,8 +4,9 @@
 --
 -- Akun yang login tanpa baris di tabel ini dianggap 'admin'.
 -- Hak khusus super_admin:
+--   - input & hapus infaq manual + riwayatnya
+--   - kirim pengingat WA infaq (admin biasa tetap bisa WA presensi/registrasi)
 --   - melihat log aktivitas semua akun (admin biasa: hanya miliknya)
---   - menghapus infaq manual yang diinput akun lain (admin biasa: hanya miliknya)
 --   - mengelola peran akun (tabel ini)
 
 create table if not exists public.admin_roles (

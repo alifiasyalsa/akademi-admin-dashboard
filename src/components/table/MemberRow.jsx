@@ -107,38 +107,95 @@ function PresenceBadge({ presence }) {
 
 
 
-function ActionCell({ student, onSendWa }) {
-  const hasPair = student.actions.length > 1 && student.actions.every((action) => action.kind === "wa");
+function canUseWaAction(action, canSendInfaqWa) {
+  if (action?.kind !== "wa") return true;
+  if (action.waType === "infaq") return Boolean(canSendInfaqWa);
+  return true;
+}
+
+function WaActionButton({ student, action, onSendWa, compact = false }) {
+  let btnClass = compact
+    ? "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200"
+    : {
+        primary:
+          "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200",
+        indigo:
+          "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-100",
+        secondary:
+          "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-medium shadow-sm transition-all active:scale-95 bg-surface hover:bg-slate-50 text-slate-700 border border-slate-300",
+        amber:
+          "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-amber-200",
+      }[action.variant] ||
+      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold bg-brand-600 text-white";
+
+  if (compact) {
+    if (action.variant === "amber") {
+      btnClass =
+        "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-sm shadow-amber-200";
+    } else if (action.variant === "secondary") {
+      btnClass =
+        "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-medium transition-all active:scale-95 bg-surface hover:bg-slate-50 text-slate-700 border border-slate-300";
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      title={action.detail || `Buka chat WhatsApp untuk ${student.name} (pakai akun WA yang login di perangkat ini)`}
+      className={btnClass}
+      onClick={() => onSendWa(student, action)}
+    >
+      {action.icon && (
+        <MaterialIcon
+          name={action.icon}
+          className={`${compact ? "text-[14px] mr-1" : "text-[16px]"}${
+            !compact && action.variant === "secondary" ? " text-slate-500" : ""
+          }`}
+        />
+      )}
+      {!action.icon && !compact && <MaterialIcon name="send" className="text-[16px]" />}{" "}
+      {action.label}
+    </button>
+  );
+}
+
+function ActionCell({ student, onSendWa, canSendInfaqWa = false }) {
+  const allowedActions = (student.actions || []).filter((action) => canUseWaAction(action, canSendInfaqWa));
+  const lockedInfaq = (student.actions || []).some(
+    (action) => action.kind === "wa" && action.waType === "infaq" && !canSendInfaqWa
+  );
+
+  const waActions = allowedActions.filter((action) => action.kind === "wa");
+  const hasPair = waActions.length > 1 && allowedActions.every((action) => action.kind === "wa");
 
   if (hasPair) {
     return (
       <div className="flex items-center justify-end gap-1.5">
-        {student.actions.map((action) => {
-          let btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200";
-          if (action.variant === "amber") {
-            btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-sm shadow-amber-200";
-          } else if (action.variant === "secondary") {
-            btnClass = "px-2.5 py-1.5 rounded-lg font-label-md text-label-md font-medium transition-all active:scale-95 bg-surface hover:bg-slate-50 text-slate-700 border border-slate-300";
-          }
-          return (
-            <button
-              key={`${action.waType}-${action.label}`}
-              type="button"
-              title={action.detail || action.label}
-              className={btnClass}
-              onClick={() => onSendWa(student, action)}
-            >
-              {action.icon && <MaterialIcon name={action.icon} className="text-[14px] mr-1" />}
-              {action.label}
-            </button>
-          );
-        })}
+        {waActions.map((action) => (
+          <WaActionButton
+            key={`${action.waType}-${action.label}`}
+            student={student}
+            action={action}
+            onSendWa={onSendWa}
+            compact
+          />
+        ))}
       </div>
     );
   }
 
-  const action = student.actions[0];
+  const action = allowedActions[0];
   if (!action) {
+    if (lockedInfaq) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg font-label-md text-label-md cursor-default bg-slate-50 text-slate-500 border border-slate-200 font-semibold"
+          title="Pengingat WA infaq hanya bisa dikirim oleh Super Admin"
+        >
+          <MaterialIcon name="lock" className="text-[16px]" /> Infaq (Super Admin)
+        </span>
+      );
+    }
     return null;
   }
 
@@ -150,30 +207,15 @@ function ActionCell({ student, onSendWa }) {
     );
   }
 
-  const className = {
-    primary:
-      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200",
-    indigo:
-      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-100",
-    secondary:
-      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-medium shadow-sm transition-all active:scale-95 bg-surface hover:bg-slate-50 text-slate-700 border border-slate-300",
-    amber:
-      "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-amber-200",
-  }[action.variant] || "inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg font-label-md text-label-md font-semibold bg-brand-600 text-white";
-
   return (
-    <button
-      type="button"
-      className={className}
-      title={action.detail || `Buka chat WhatsApp (wa.me) untuk ${student.name}`}
-      onClick={() => onSendWa(student, action)}
-    >
-      <MaterialIcon
-        name={action.icon || "send"}
-        className={`text-[16px]${action.variant === "secondary" ? " text-slate-500" : ""}`}
-      />{" "}
-      {action.label}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <WaActionButton student={student} action={action} onSendWa={onSendWa} />
+      {lockedInfaq && action.waType !== "infaq" && (
+        <span className="text-[10px] font-semibold text-slate-400" title="Pengingat WA infaq hanya Super Admin">
+          Infaq: Super Admin
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -186,7 +228,7 @@ function validBreakdownTitle(breakdown) {
   ].join("\n");
 }
 
-export function MemberRow({ student, onSendWa, onManualInfaq }) {
+export function MemberRow({ student, onSendWa, onManualInfaq, canSendInfaqWa = false }) {
   return (
     <tr className="hover:bg-slate-50 transition-colors duration-150 group border-b border-slate-100">
       <td className="py-space-md px-space-lg">
@@ -275,7 +317,7 @@ export function MemberRow({ student, onSendWa, onManualInfaq }) {
         </div>
       </td>
       <td className="py-space-md px-space-lg text-right">
-        <ActionCell student={student} onSendWa={onSendWa} />
+        <ActionCell student={student} onSendWa={onSendWa} canSendInfaqWa={canSendInfaqWa} />
       </td>
     </tr>
   );

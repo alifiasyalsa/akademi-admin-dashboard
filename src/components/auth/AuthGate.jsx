@@ -5,8 +5,6 @@ import { roleService } from "../../services/roleService.js";
 import { LoginScreen } from "./LoginScreen.jsx";
 import { MaterialIcon } from "../MaterialIcon.jsx";
 
-let loggedOAuthLogin = false;
-
 /**
  * Dashboard hanya dirender setelah akun admin login (Supabase Auth).
  * Sesi berakhir / refresh token ditolak → otomatis kembali ke layar login.
@@ -21,13 +19,8 @@ export function AuthGate({ children }) {
   useEffect(() => {
     const unsubscribe = supabaseAuth.subscribe((session) => setUser(session?.user || null));
     let active = true;
-    supabaseAuth.init().then(({ signedInWithOAuth, signInMethod, error }) => {
+    supabaseAuth.init().then(({ error }) => {
       if (!active) return;
-      // init() dimemo & effect berjalan 2x di StrictMode: log login via redirect cukup sekali
-      if (signedInWithOAuth && !loggedOAuthLogin) {
-        loggedOAuthLogin = true;
-        activityLogService.log({ action: "auth.login", details: { method: signInMethod || "google" } });
-      }
       setInitialError(error);
       setUser(supabaseAuth.getUser());
       setReady(true);
@@ -56,6 +49,14 @@ export function AuthGate({ children }) {
     activityLogService.log({ action: "auth.login", details: { method: "password" } });
   }
 
+  async function handleSignUp(email, password, { fullName } = {}) {
+    const result = await supabaseAuth.signUp(email, password, { fullName });
+    if (!result.needsConfirmation) {
+      activityLogService.log({ action: "auth.login", details: { method: "signup" } });
+    }
+    return result;
+  }
+
   async function handleSignOut() {
     await activityLogService.log({ action: "auth.logout" });
     await supabaseAuth.signOut();
@@ -73,13 +74,7 @@ export function AuthGate({ children }) {
   if (!ready) return loadingScreen;
 
   if (!user) {
-    return (
-      <LoginScreen
-        onSignIn={handleSignIn}
-        onSignInWithGoogle={() => supabaseAuth.signInWithGoogle()}
-        initialError={initialError}
-      />
-    );
+    return <LoginScreen onSignIn={handleSignIn} onSignUp={handleSignUp} initialError={initialError} />;
   }
 
   if (!role) return loadingScreen;

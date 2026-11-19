@@ -17,6 +17,7 @@ import { reminderTrackingService } from "./services/reminderTrackingService.js";
 import { templateService, DEFAULT_TEMPLATES } from "./services/templateService.js";
 import { MessageTemplateModal } from "./components/registrasi/MessageTemplateModal.jsx";
 import { ManualInfaqModal } from "./components/table/ManualInfaqModal.jsx";
+import { ManualInfaqHistoryModal } from "./components/table/ManualInfaqHistoryModal.jsx";
 import { manualInfaqService } from "./services/manualInfaqService.js";
 import { formatRupiah } from "./services/formatters.js";
 import { getUserDisplayName } from "./services/supabaseAuth.js";
@@ -62,6 +63,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
   const [toast, setToast] = useState(null);
   const [pendingRegistrasiCount, setPendingRegistrasiCount] = useState(null);
   const [isActivityLogOpen, setIsActivityLogOpen] = useState(false);
+  const [isManualInfaqHistoryOpen, setIsManualInfaqHistoryOpen] = useState(false);
   const [isRoleManagerOpen, setIsRoleManagerOpen] = useState(false);
 
   const adminProfile = tokenManager.getAdminProfile();
@@ -118,6 +120,16 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
   }, []);
 
   async function handleSendWa(student, action) {
+    if (action?.waType === "infaq" && !isSuperAdmin) {
+      setToast({
+        icon: "lock",
+        title: "WA Infaq terkunci",
+        subtitle: "Hanya Super Admin yang dapat mengirim pengingat infaq",
+      });
+      window.setTimeout(() => setToast(null), 2800);
+      return;
+    }
+
     // Batch diambil dari baris santri (bisa berbeda-beda saat beberapa batch dipilih)
     const targetBatch = student.batchNo || selectedFilters.batchId || data.filters.selected?.batchId;
     const activeBatchObj = data.filters?.batches?.find((b) => String(b.id) === String(targetBatch));
@@ -207,6 +219,9 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
   }
 
   async function handleSubmitManualInfaq({ amount, transactionDate, notes }) {
+    if (!isSuperAdmin) {
+      throw new Error("Hanya Super Admin yang dapat menginput infaq manual.");
+    }
     const student = manualInfaqStudent;
     if (!student?.memberId || !student.batchNo) {
       throw new Error("Data member atau batch tidak lengkap.");
@@ -229,6 +244,9 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
   }
 
   async function handleDeleteManualInfaq(entry) {
+    if (!isSuperAdmin) {
+      throw new Error("Hanya Super Admin yang dapat menghapus infaq manual.");
+    }
     await manualInfaqService.remove(entry);
     await reloadData?.();
     showTimedToast({
@@ -324,7 +342,9 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
                   onTabChange={setActiveTab}
                   onSearchChange={setSearchQuery}
                   onSendWa={handleSendWa}
-                  onManualInfaq={currentUser ? (student) => setManualInfaqRowKey(student.rowKey) : undefined}
+                  canSendInfaqWa={isSuperAdmin}
+                  onManualInfaq={isSuperAdmin ? (student) => setManualInfaqRowKey(student.rowKey) : undefined}
+                  onOpenManualInfaqHistory={isSuperAdmin ? () => setIsManualInfaqHistoryOpen(true) : undefined}
                   onRefresh={handleRefresh}
                   onOpenTemplates={() => setIsMonTemplateModalOpen(true)}
                   exportFileParts={monitoringExportParts}
@@ -366,7 +386,18 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
           onClose={() => setManualInfaqRowKey(null)}
           onSubmit={handleSubmitManualInfaq}
           onDelete={handleDeleteManualInfaq}
-          canDeleteEntry={(entry) => isSuperAdmin || entry.created_by_id === currentUser?.id}
+          canDeleteEntry={() => isSuperAdmin}
+        />
+
+        <ManualInfaqHistoryModal
+          isOpen={isManualInfaqHistoryOpen}
+          batchIds={selectedFilters.batchIds || []}
+          batchOptions={data.filters?.batches || []}
+          onClose={() => setIsManualInfaqHistoryOpen(false)}
+          onDelete={async (entry) => {
+            await handleDeleteManualInfaq(entry);
+          }}
+          canDeleteEntry={() => isSuperAdmin}
         />
 
         <ActivityLogModal

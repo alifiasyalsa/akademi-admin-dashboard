@@ -16,7 +16,6 @@ export const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publis
 export const LOGIN_ENABLED = import.meta.env.VITE_ENABLE_LOGIN === "true";
 
 const SESSION_KEY = "qb_akademi_supabase_session";
-const PKCE_VERIFIER_KEY = "qb_akademi_pkce_verifier";
 const REFRESH_MARGIN_MS = 60 * 1000;
 
 const listeners = new Set();
@@ -24,82 +23,6 @@ let session = LOGIN_ENABLED ? loadSession() : null;
 let refreshTimer = null;
 let refreshPromise = null;
 let initPromise = null;
-
-function base64UrlEncode(bytes) {
-  let binary = "";
-  bytes.forEach((b) => {
-    binary += String.fromCharCode(b);
-  });
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-async function createPkcePair() {
-  const verifier = base64UrlEncode(crypto.getRandomValues(new Uint8Array(48)));
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
-  return { verifier, challenge: base64UrlEncode(new Uint8Array(digest)) };
-}
-
-function currentRedirectUrl() {
-  return `${window.location.origin}${window.location.pathname}`;
-}
-
-/**
- * Kembali dari Google: URL membawa ?code=... (PKCE) atau ?error=...
- * Kode ditukar menjadi sesi, lalu parameter dibersihkan dari address bar.
- */
-async function completeOAuthRedirect() {
-  const params = new URLSearchParams(window.location.search);
-  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const code = params.get("code");
-  const oauthError =
-    params.get("error_description") ||
-    hashParams.get("error_description") ||
-    params.get("error") ||
-    hashParams.get("error");
-  const hashAccessToken = hashParams.get("access_token");
-  if (!code && !oauthError && !hashAccessToken) return { handled: false };
-
-  window.history.replaceState(null, "", window.location.pathname);
-
-  // Link konfirmasi email / magic link (alur implicit): token dikirim lewat hash URL
-  if (hashAccessToken && !oauthError) {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${hashAccessToken}` },
-      });
-      if (!res.ok) throw new Error("Link login tidak valid atau sudah kedaluwarsa.");
-      const user = await res.json();
-      setSession(
-        normalizeSession({
-          access_token: hashAccessToken,
-          refresh_token: hashParams.get("refresh_token"),
-          expires_at: Number(hashParams.get("expires_at")) || undefined,
-          expires_in: hashParams.get("expires_in"),
-          user,
-        })
-      );
-      return { handled: true, signedIn: true, method: hashParams.get("type") || "link" };
-    } catch (err) {
-      return { handled: true, error: err.message };
-    }
-  }
-  const verifier = localStorage.getItem(PKCE_VERIFIER_KEY);
-  localStorage.removeItem(PKCE_VERIFIER_KEY);
-
-  if (oauthError) {
-    return { handled: true, error: translateAuthError({ msg: oauthError }, 400) };
-  }
-  if (!verifier) {
-    return { handled: true, error: "Sesi login Google kedaluwarsa. Silakan coba lagi." };
-  }
-  try {
-    const payload = await authRequest("token?grant_type=pkce", { auth_code: code, code_verifier: verifier });
-    setSession(normalizeSession(payload));
-    return { handled: true, signedIn: true, method: "google" };
-  } catch (err) {
-    return { handled: true, error: err.message };
-  }
-}
 
 function loadSession() {
   try {
@@ -154,16 +77,18 @@ function scheduleRefresh() {
 function translateAuthError(payload, status) {
   const message = payload?.error_description || payload?.msg || payload?.message || payload?.error || "";
   if (/invalid login credentials/i.test(message)) return "Email atau password salah.";
-  if (/email not confirmed/i.test(message)) return "Email akun belum dikonfirmasi. Hubungi admin.";
+  if (/email not confirmed/i.test(message)) return "Email akun belum dikonfirmasi. Cek kotak masuk atau hubungi admin.";
+  if (/user already registered|already been registered|email.*already/i.test(message)) {
+    return "Email sudah terdaftar. Silakan masuk atau gunakan email lain.";
+  }
+  if (/password.*(too short|at least|weak)/i.test(message)) {
+    return "Password terlalu pendek. Minimal 6 karakter.";
+  }
   if (/signups? not allowed|signup.*disabled/i.test(message)) {
-    return "Akun Google ini belum terdaftar sebagai admin. Hubungi super admin.";
+    return "Pendaftaran akun ditutup di Supabase. Aktifkan 'Allow new users to sign up' di Authentication → Providers → Email.";
   }
-  if (/provider is not enabled|unsupported provider/i.test(message)) {
-    return "Login Google belum diaktifkan di Supabase.";
-  }
-  if (/access_denied/i.test(message)) return "Login Google dibatalkan.";
-  if (status === 429) return "Terlalu banyak percobaan login. Coba lagi beberapa saat.";
-  return message || `Login gagal (HTTP ${status}).`;
+  if (status === 429) return "Terlalu banyak percobaan. Coba lagi beberapa saat.";
+  return message || `Autentikasi gagal (HTTP ${status}).`;
 }
 
 async function authRequest(path, body, accessToken) {
@@ -238,15 +163,14 @@ export const supabaseAuth = {
   },
 
   /**
-   * Selesaikan redirect login Google (jika ada), lalu pulihkan sesi tersimpan
-   * dan refresh jika sudah/hampir kedaluwarsa. Hanya berjalan sekali per page load.
-   * @returns {Promise<{ session: Object|null, signedInWithOAuth: boolean, error: string|null }>}
+   * Pulihkan sesi tersimpan dan refresh jika sudah/hampir kedaluwarsa.
+   * Hanya berjalan sekali per page load.
+   * @returns {Promise<{ session: Object|null, error: string|null }>}
    */
   init() {
     if (!initPromise) {
       initPromise = (async () => {
-        const oauth = await completeOAuthRedirect();
-        if (session && !oauth.signedIn) {
+        if (session) {
           if (session.expires_at - Date.now() < REFRESH_MARGIN_MS) {
             try {
               await refreshSession();
@@ -257,44 +181,45 @@ export const supabaseAuth = {
             scheduleRefresh();
           }
         }
-        return {
-          session,
-          signedInWithOAuth: Boolean(oauth.signedIn),
-          signInMethod: oauth.method || null,
-          error: oauth.error || null,
-        };
+        return { session, error: null };
       })();
     }
     return initPromise;
-  },
-
-  /** Arahkan browser ke halaman login Google (Supabase OAuth, alur PKCE). */
-  async signInWithGoogle() {
-    // Cek dulu provider aktif: jika tidak, Supabase menampilkan halaman JSON error mentah setelah redirect.
-    // Provider aktif → 302 ke Google (opaqueredirect); nonaktif → 400 dengan pesan error.
-    const probe = await fetch(
-      `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(currentRedirectUrl())}`,
-      { redirect: "manual" }
-    ).catch(() => null);
-    if (probe && probe.type !== "opaqueredirect" && !probe.ok) {
-      const payload = await probe.json().catch(() => null);
-      throw new Error(translateAuthError(payload, probe.status));
-    }
-
-    const { verifier, challenge } = await createPkcePair();
-    localStorage.setItem(PKCE_VERIFIER_KEY, verifier);
-    const url = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
-    url.searchParams.set("provider", "google");
-    url.searchParams.set("redirect_to", currentRedirectUrl());
-    url.searchParams.set("code_challenge", challenge);
-    url.searchParams.set("code_challenge_method", "s256");
-    window.location.assign(url.toString());
   },
 
   async signIn(email, password) {
     const payload = await authRequest("token?grant_type=password", { email, password });
     setSession(normalizeSession(payload));
     return session;
+  },
+
+  /**
+   * Daftar akun baru (email + password).
+   * Jika konfirmasi email dimatikan di Supabase, sesi langsung aktif.
+   * Jika konfirmasi wajib, kembalikan { needsConfirmation: true } tanpa sesi.
+   * @returns {Promise<{ session: Object|null, needsConfirmation: boolean }>}
+   */
+  async signUp(email, password, { fullName } = {}) {
+    const payload = await authRequest("signup", {
+      email,
+      password,
+      data: fullName ? { full_name: fullName } : undefined,
+    });
+    // Format GoTrue: token di root, atau { session, user } (session null jika perlu konfirmasi email)
+    const sessionPayload = payload?.access_token
+      ? payload
+      : payload?.session?.access_token
+      ? { ...payload.session, user: payload.user || payload.session.user }
+      : null;
+    const next = normalizeSession(sessionPayload);
+    if (next) {
+      setSession(next);
+      return { session, needsConfirmation: false };
+    }
+    if (payload?.id || payload?.user?.id) {
+      return { session: null, needsConfirmation: true };
+    }
+    throw new Error("Pendaftaran gagal. Respons Supabase tidak dikenali.");
   },
 
   async signOut() {

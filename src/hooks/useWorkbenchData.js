@@ -17,7 +17,9 @@ import { stitchMock } from "../data/stitchMock.js";
 // Opsi khusus di dropdown Kelas: gabungan semua kelas pada hari yang dipilih
 export const ALL_DAY_CLASSES_ID = "__semua_kelas_hari__";
 
-const MAX_PARALLEL_CLASS_FETCH = 6;
+// Tiap kelas = 3 request CMS. 2 paralel ≈ 6 koneksi = batas tipikal browser/origin.
+// Jangan naikkan tanpa men-serialisasi loadCommitments/infaq (dulu bikin stuck di ~12/94).
+const MAX_PARALLEL_CLASS_FETCH = 2;
 const CLASS_BANNER_INFAQ_TYPE = "class_banner";
 
 // Hanya batch berjudul "16" dan batch yang lebih baru (batch_no lebih besar) yang ditampilkan.
@@ -295,25 +297,28 @@ export function useWorkbenchData() {
     const isCurrent = () => currentFetchId === fetchCountRef.current;
     setLoading(true);
     setError(null);
-    setLoadingProgress(isAggregate ? { done: 0, total: targetClasses.length } : null);
+    setLoadingProgress(
+      isAggregate
+        ? { done: 0, total: targetClasses.length, phase: "kelas" }
+        : { done: 0, total: 1, phase: "kelas" }
+    );
 
     try {
       // Daftar santri dari roster kelas (tidak bergantung presensi); presensi pekan hanya ditempelkan.
+      // Request per kelas dijalankan berurutan agar 2 kelas paralel tidak melebihi ~6 koneksi browser.
       const fetchClassGroup = async (cls) => {
         try {
-          const [roster, attendanceRes, classAttendanceRes] = await Promise.all([
-            cmsApi.getClassMembers(cls.id, { force }).catch(() => null),
-            cmsApi
-              .getWeeklyAttendance({
-                batch_id: cls.batch ?? selectedBatch,
-                class_id: cls.id,
-                week_num: weekNum,
-                limit: 500,
-                force,
-              })
-              .catch(() => null),
-            cmsApi.getClassAttendance(cls.id, { force }).catch(() => null),
-          ]);
+          const roster = await cmsApi.getClassMembers(cls.id, { force }).catch(() => null);
+          const attendanceRes = await cmsApi
+            .getWeeklyAttendance({
+              batch_id: cls.batch ?? selectedBatch,
+              class_id: cls.id,
+              week_num: weekNum,
+              limit: 500,
+              force,
+            })
+            .catch(() => null);
+          const classAttendanceRes = await cmsApi.getClassAttendance(cls.id, { force }).catch(() => null);
           if (roster === null && attendanceRes === null) {
             throw new Error(`Data kelas ${cls.name} gagal dimuat.`);
           }
@@ -330,48 +335,50 @@ export function useWorkbenchData() {
           console.warn(`Gagal memuat presensi kelas ${cls.name}:`, err);
           return { cls, failed: true };
         } finally {
-          if (isAggregate && isCurrent()) {
-            setLoadingProgress((prev) => (prev ? { ...prev, done: prev.done + 1 } : prev));
+          if (isCurrent()) {
+            setLoadingProgress((prev) =>
+              prev?.phase === "kelas" ? { ...prev, done: Math.min(prev.done + 1, prev.total) } : prev
+            );
           }
         }
       };
 
       // Komitmen & log pengingat diambil per batch terpilih lalu digabung.
       // Komitmen ditandai `_batch` agar pencocokan santri tidak tertukar antar batch.
-      const loadCommitments = () =>
-        Promise.all(
-          selectedBatches.map(async (batchNo) => {
-            const res = await cmsApi.getMemberCommitments({ batch: batchNo, fetchAll: true, force });
-            return (res.data || []).map((c) => ({ ...c, _batch: batchNo }));
-          })
-        ).then((lists) => lists.flat());
+      // Batch di-load berurutan supaya pagination fetchAll tidak bertabrakan antar batch.
+      const loadCommitments = async () => {
+        const lists = [];
+        for (const batchNo of selectedBatches) {
+          const res = await cmsApi.getMemberCommitments({ batch: batchNo, fetchAll: true, force });
+          lists.push((res.data || []).map((c) => ({ ...c, _batch: batchNo })));
+        }
+        return lists.flat();
+      };
       // Transaksi infaq class_banner per batch (rentang tanggal dari jadwal kelas batch tsb),
       // dijumlahkan per member_id → ditambahkan ke infaq valid komitmen.
       const loadClassBannerInfaq = async () => {
         const totals = new Map();
         let failed = false;
-        await Promise.all(
-          selectedBatches.map(async (batchNo) => {
-            const range = getScheduleRange(classes.filter((c) => String(c.batch) === String(batchNo)));
-            if (!range) return;
-            try {
-              const transactions = await cmsApi.getInfaqTransactions({
-                start_date: range.start,
-                end_date: range.end,
-                force,
-              });
-              transactions.forEach((trx) => {
-                const memberId = trx?.member?.id;
-                if (trx?.infaq_type !== CLASS_BANNER_INFAQ_TYPE || !memberId) return;
-                const key = `${batchNo}|${memberId}`;
-                totals.set(key, (totals.get(key) || 0) + (Number(trx.amount) || 0));
-              });
-            } catch (err) {
-              console.warn(`Gagal memuat transaksi infaq class_banner batch ${batchNo}:`, err);
-              failed = true;
-            }
-          })
-        );
+        for (const batchNo of selectedBatches) {
+          const range = getScheduleRange(classes.filter((c) => String(c.batch) === String(batchNo)));
+          if (!range) continue;
+          try {
+            const transactions = await cmsApi.getInfaqTransactions({
+              start_date: range.start,
+              end_date: range.end,
+              force,
+            });
+            transactions.forEach((trx) => {
+              const memberId = trx?.member?.id;
+              if (trx?.infaq_type !== CLASS_BANNER_INFAQ_TYPE || !memberId) return;
+              const key = `${batchNo}|${memberId}`;
+              totals.set(key, (totals.get(key) || 0) + (Number(trx.amount) || 0));
+            });
+          } catch (err) {
+            console.warn(`Gagal memuat transaksi infaq class_banner batch ${batchNo}:`, err);
+            failed = true;
+          }
+        }
         return { totals, failed };
       };
       // Transaksi infaq manual (Supabase) per batch, dikelompokkan per member_id
@@ -380,35 +387,45 @@ export function useWorkbenchData() {
         let failed = false;
         // Tabel infaq manual hanya bisa diakses akun yang login (RLS)
         if (!supabaseAuth.getUser()) return { entries, failed };
-        await Promise.all(
-          selectedBatches.map(async (batchNo) => {
-            try {
-              const rows = await manualInfaqService.fetchByBatch(batchNo);
-              rows.forEach((row) => {
-                const key = `${batchNo}|${row.member_id}`;
-                if (!entries.has(key)) entries.set(key, []);
-                entries.get(key).push(row);
-              });
-            } catch (err) {
-              console.warn(`Gagal memuat infaq manual batch ${batchNo}:`, err);
-              failed = true;
-            }
-          })
-        );
+        for (const batchNo of selectedBatches) {
+          try {
+            const rows = await manualInfaqService.fetchByBatch(batchNo);
+            rows.forEach((row) => {
+              const key = `${batchNo}|${row.member_id}`;
+              if (!entries.has(key)) entries.set(key, []);
+              entries.get(key).push(row);
+            });
+          } catch (err) {
+            console.warn(`Gagal memuat infaq manual batch ${batchNo}:`, err);
+            failed = true;
+          }
+        }
         return { entries, failed };
       };
-      const loadReminderLogs = () =>
-        Promise.all(
-          selectedBatches.map((batchNo) =>
-            reminderTrackingService.fetchBatchReminders(batchNo).catch(() => new Map())
-          )
-        ).then((maps) => new Map(maps.flatMap((m) => [...m])));
+      const loadReminderLogs = async () => {
+        const maps = [];
+        for (const batchNo of selectedBatches) {
+          maps.push(await reminderTrackingService.fetchBatchReminders(batchNo).catch(() => new Map()));
+        }
+        return new Map(maps.flatMap((m) => [...m]));
+      };
 
-      const [groupResults, commitmentsList, reminderLogsMap, classBannerInfaq, manualInfaq, teacherClassesRes] = await Promise.all([
-        mapWithLimit(targetClasses, MAX_PARALLEL_CLASS_FETCH, fetchClassGroup),
-        loadCommitments(),
+      // 1) Muat kelas dulu (progress X/Y), baru 2) komitmen/infaq/reminder —
+      // supaya pagination berat tidak merebut koneksi browser dari fetch kelas.
+      const groupResults = await mapWithLimit(targetClasses, MAX_PARALLEL_CLASS_FETCH, fetchClassGroup);
+      if (!isCurrent()) return;
+
+      if (isCurrent()) {
+        setLoadingProgress({ done: 0, total: 1, phase: "pendukung" });
+      }
+
+      // CMS commitments/infaq berurutan; Supabase boleh paralel (origin berbeda).
+      const commitmentsList = await loadCommitments();
+      if (!isCurrent()) return;
+      const classBannerInfaq = await loadClassBannerInfaq();
+      if (!isCurrent()) return;
+      const [reminderLogsMap, manualInfaq, teacherClassesRes] = await Promise.all([
         loadReminderLogs(),
-        loadClassBannerInfaq(),
         loadManualInfaq(),
         activeClass?.teacher?.id
           ? cmsApi.getTeacherClasses(activeClass.teacher.id, { force }).catch(() => [])
@@ -532,7 +549,9 @@ export function useWorkbenchData() {
     data: viewModel,
     loading,
     loadingLabel: loadingProgress
-      ? `Memuat ${loadingProgress.done}/${loadingProgress.total} kelas...`
+      ? loadingProgress.phase === "pendukung"
+        ? "Memuat komitmen & infaq..."
+        : `Memuat ${loadingProgress.done}/${loadingProgress.total} kelas...`
       : null,
     error,
     authStatus,

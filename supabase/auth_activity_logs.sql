@@ -1,14 +1,11 @@
--- Login akun admin (Supabase Auth) + log aktivitas per akun.
+-- Login akun admin (Supabase Auth email + password) + log aktivitas per akun.
 -- Jalankan di Supabase SQL Editor SETELAH admin_roles.sql (aman dijalankan ulang).
 --
--- Akun dibuat oleh admin di Supabase Dashboard → Authentication → Users → "Add user"
--- (centang "Auto Confirm User"). Matikan pendaftaran publik di
--- Authentication → Sign In / Providers → "Allow new users to sign up".
---
--- Login Google: aktifkan provider Google (Client ID & Secret dari Google Cloud Console,
--- redirect URI https://<project>.supabase.co/auth/v1/callback), lalu daftarkan URL dashboard
--- (localhost & domain Vercel) di Authentication → URL Configuration → Redirect URLs.
--- Dengan pendaftaran publik dimatikan, hanya email Gmail yang sudah dibuat di Users yang bisa masuk.
+-- Akun bisa dibuat dari layar Daftar di dashboard (email + password), atau manual di
+-- Supabase Dashboard → Authentication → Users → "Add user" (centang Auto Confirm User).
+-- Agar tombol Daftar berfungsi: Authentication → Providers → Email → nyalakan
+-- "Allow new users to sign up". Disarankan matikan "Confirm email" agar langsung bisa masuk.
+-- Provider Google tidak dipakai (boleh dimatikan di Authentication → Providers).
 
 -- 1. Log aktivitas (append-only: tidak ada policy update / delete)
 create table if not exists public.activity_logs (

@@ -83,6 +83,8 @@ export function WorkbenchTable({
   onSearchChange,
   onSendWa,
   onManualInfaq,
+  onOpenManualInfaqHistory,
+  canSendInfaqWa = false,
   onRefresh,
   onOpenTemplates,
   exportFileParts = [],
@@ -185,7 +187,7 @@ export function WorkbenchTable({
           )}
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <button
             type="button"
             onClick={handleExportCsv}
@@ -196,6 +198,17 @@ export function WorkbenchTable({
             <MaterialIcon name="download" className="text-[18px] text-slate-500" />
             <span>Download CSV ({visibleStudents.length})</span>
           </button>
+          {onOpenManualInfaqHistory && (
+            <button
+              type="button"
+              onClick={onOpenManualInfaqHistory}
+              title="Lihat riwayat input infaq manual"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            >
+              <MaterialIcon name="receipt_long" className="text-[18px] text-slate-500" />
+              <span>Riwayat Infaq Manual</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={onOpenTemplates}
@@ -250,6 +263,7 @@ export function WorkbenchTable({
                   student={student}
                   onSendWa={onSendWa}
                   onManualInfaq={onManualInfaq}
+                  canSendInfaqWa={canSendInfaqWa}
                 />
               ))
             )}

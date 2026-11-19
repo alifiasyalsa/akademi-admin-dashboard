@@ -96,7 +96,7 @@ export function RoleManagerModal({ isOpen, currentUser, onClose, onShowToast }) 
               type="email"
               value={newEmail}
               onChange={(event) => setNewEmail(event.target.value)}
-              placeholder="nama@gmail.com"
+              placeholder="nama@quranbest.id"
               className="mt-1 w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-600"
             />
           </label>
@@ -193,7 +193,7 @@ export function RoleManagerModal({ isOpen, currentUser, onClose, onShowToast }) 
         </div>
 
         <p className="mt-3 text-[11px] text-slate-400">
-          Peran hanya mengatur hak akses. Akun login tetap dibuat di Supabase Dashboard → Authentication → Users.
+          Peran hanya mengatur hak akses. Akun baru bisa daftar sendiri di layar login (tab Daftar), lalu diangkat ke Super Admin di sini.
         </p>
       </div>
     </div>

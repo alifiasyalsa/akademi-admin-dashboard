@@ -1,6 +1,6 @@
--- Transaksi infaq yang diinput manual oleh admin (per member, per batch).
+-- Transaksi infaq yang diinput manual (per member, per batch).
 -- Jalankan di Supabase SQL Editor SETELAH admin_roles.sql (aman dijalankan ulang).
--- Hanya akun yang login yang bisa membaca / menambah. Hapus: inputan sendiri, atau super admin.
+-- Baca: semua akun yang login. Tambah / hapus: hanya super_admin.
 
 create table if not exists public.manual_infaq_transactions (
   id uuid primary key default gen_random_uuid(),
@@ -33,10 +33,13 @@ create policy "authenticated read manual infaq" on public.manual_infaq_transacti
   for select to authenticated using (true);
 
 drop policy if exists "authenticated insert manual infaq" on public.manual_infaq_transactions;
-create policy "authenticated insert manual infaq" on public.manual_infaq_transactions
-  for insert to authenticated with check (amount > 0 and created_by_id = auth.uid());
+drop policy if exists "super admin insert manual infaq" on public.manual_infaq_transactions;
+create policy "super admin insert manual infaq" on public.manual_infaq_transactions
+  for insert to authenticated
+  with check (public.is_super_admin() and amount > 0 and created_by_id = auth.uid());
 
 drop policy if exists "authenticated delete manual infaq" on public.manual_infaq_transactions;
 drop policy if exists "delete own manual infaq or super admin" on public.manual_infaq_transactions;
-create policy "delete own manual infaq or super admin" on public.manual_infaq_transactions
-  for delete to authenticated using (created_by_id = auth.uid() or public.is_super_admin());
+drop policy if exists "super admin delete manual infaq" on public.manual_infaq_transactions;
+create policy "super admin delete manual infaq" on public.manual_infaq_transactions
+  for delete to authenticated using (public.is_super_admin());

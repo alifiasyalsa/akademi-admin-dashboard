@@ -27,9 +27,25 @@ function cached(key, loader, { force = false } = {}) {
   return promise;
 }
 
+/** Batasi paralel sisa halaman agar tidak menjejali connection pool browser (~6/origin). */
+const PAGE_FETCH_CONCURRENCY = 2;
+
+async function mapWithLimit(items, limit, fn) {
+  const results = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const idx = next++;
+      results[idx] = await fn(items[idx], idx);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 /**
  * Ambil semua halaman datatable. Halaman pertama menentukan `recordsTotal`,
- * sisa halaman diambil paralel (bukan berurutan).
+ * sisa halaman diambil dengan concurrency terbatas (bukan Promise.all sekaligus).
  * Langkah offset memakai jumlah baris aktual halaman pertama, sehingga tetap benar
  * walaupun server membatasi `limit` lebih kecil dari yang diminta.
  */
@@ -48,7 +64,7 @@ async function fetchAllPages(fetchPage, { offset = 0, pageSize, fetchAll = true 
   const offsets = [];
   for (let o = offset + step; o < total; o += step) offsets.push(o);
 
-  const pages = await Promise.all(offsets.map((o) => fetchPage(o, pageSize)));
+  const pages = await mapWithLimit(offsets, PAGE_FETCH_CONCURRENCY, (o) => fetchPage(o, pageSize));
   const data = firstData.concat(...pages.map((p) => p?.data || []));
   return { total: total || data.length, recordsTotal, data };
 }
