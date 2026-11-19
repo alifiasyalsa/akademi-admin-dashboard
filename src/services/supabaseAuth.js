@@ -11,9 +11,9 @@
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ihbsysccstltadfaztgz.supabase.co";
 export const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_-r4Af6aaQrcjbu6wI_wRvw_7bvJN-eC";
 
-// Login akun aktif hanya jika VITE_ENABLE_LOGIN=true. Nonaktif → dashboard tanpa login,
-// request Supabase memakai anon key, fitur berbasis akun disembunyikan.
-export const LOGIN_ENABLED = import.meta.env.VITE_ENABLE_LOGIN === "true";
+// Login akun aktif by default. Set VITE_ENABLE_LOGIN=false hanya untuk mode prototipe lokal
+// (dashboard tanpa login; request Supabase memakai anon key; fitur berbasis akun disembunyikan).
+export const LOGIN_ENABLED = import.meta.env.VITE_ENABLE_LOGIN !== "false";
 
 const SESSION_KEY = "qb_akademi_supabase_session";
 const REFRESH_MARGIN_MS = 60 * 1000;
