@@ -474,6 +474,7 @@ export function buildWorkbenchViewModel({
       batchNo,
       classId: group.cls?.id ? String(group.cls.id) : "",
       className: group.cls?.name || item.class_name || "",
+      classLevel: group.cls?.class_type?.name || item.class_type?.name || "Tanpa Level",
       classDay: group.schedule?.label || null,
       name: memberName,
       initials: getInitials(memberName),
@@ -517,6 +518,31 @@ export function buildWorkbenchViewModel({
   const percentOfTotal = (n) => (totalStudents > 0 ? ((n / totalStudents) * 100).toFixed(1) + "%" : "0%");
   const attendanceRate = countRecorded > 0 ? ((countHadir / countRecorded) * 100).toFixed(1) + "%" : "-";
 
+  // Breakdown partisipasi & kehadiran per level kelas (pekan terpilih), urut peserta terbanyak
+  const levelStatsMap = new Map();
+  for (const student of studentRows) {
+    const level = student.classLevel || "Tanpa Level";
+    if (!levelStatsMap.has(level)) {
+      levelStatsMap.set(level, { level, students: 0, hadir: 0, tidakHadir: 0, belumDiisi: 0, belumBerjalan: 0 });
+    }
+    const row = levelStatsMap.get(level);
+    row.students += 1;
+    const tone = student.presence?.tone;
+    if (tone === "hadir") row.hadir += 1;
+    else if (tone === "belumDiisi") row.belumDiisi += 1;
+    else if (tone === "belumBerjalan") row.belumBerjalan += 1;
+    else row.tidakHadir += 1; // tidak hadir / sakit / izin / alpa
+  }
+  const byLevel = [...levelStatsMap.values()]
+    .map((row) => {
+      const recorded = row.hadir + row.tidakHadir;
+      const rate = recorded > 0 ? `${((row.hadir / recorded) * 100).toFixed(1)}%` : "-";
+      const share =
+        totalStudents > 0 ? `${((row.students / totalStudents) * 100).toFixed(1)}%` : "0%";
+      return { ...row, recorded, rate, share };
+    })
+    .sort((a, b) => b.students - a.students || b.hadir - a.hadir);
+
   const summaryAttendance = {
     rate: attendanceRate,
     weekBadge: `Pekan ${currentWeek} / ${numMeetings}`,
@@ -537,12 +563,36 @@ export function buildWorkbenchViewModel({
         ? [{ label: `${countBelumBerjalan} Belum Berjalan`, dotClass: "bg-slate-200 border border-slate-300", textClass: "text-slate-500 font-medium" }]
         : []),
     ],
+    byLevel,
   };
 
   // Card 2: Infaq
   const infaqRateVal = totalClassTargetInfaq > 0 ? (totalClassValidInfaq / totalClassTargetInfaq) * 100 : 100;
   const infaqRateDisplay = Math.min(infaqRateVal, 100).toFixed(1) + "%";
   const gapAmountVal = Math.max(0, totalClassTargetInfaq - totalClassValidInfaq);
+
+  // Capaian per pekan: berapa anggota yang valid-nya sudah menutup kewajiban s/d pekan tsb
+  // (hanya anggota dengan komitmen > 0). Bebas biaya dihitung terpisah.
+  const committedMembers = studentRows.filter((s) => (Number(s.weeklyCommitmentValue) || 0) > 0);
+  const freeMembers = studentRows.length - committedMembers.length;
+  const byWeek = [];
+  for (let w = 1; w <= currentWeek; w++) {
+    let achieved = 0;
+    for (const s of committedMembers) {
+      const weekly = Number(s.weeklyCommitmentValue) || 0;
+      const valid = Number(s.validValue) || 0;
+      if (valid >= weekly * w) achieved += 1;
+    }
+    const total = committedMembers.length;
+    byWeek.push({
+      week: w,
+      achieved,
+      total,
+      rate: total > 0 ? `${((achieved / total) * 100).toFixed(0)}%` : "-",
+    });
+  }
+  const currentWeekAchieved = byWeek[byWeek.length - 1]?.achieved ?? 0;
+  const currentWeekTotal = byWeek[byWeek.length - 1]?.total ?? committedMembers.length;
 
   const summaryInfaq = {
     rate: infaqRateDisplay,
@@ -552,6 +602,10 @@ export function buildWorkbenchViewModel({
     validAmount: `Valid: ${formatRupiah(totalClassValidInfaq)}`,
     gapAmount: `Gap: ${formatRupiah(gapAmountVal)}`,
     barWidth: Math.min(infaqRateVal, 100).toFixed(1) + "%",
+    achievedBadge: `${currentWeekAchieved}/${currentWeekTotal} capaian`,
+    achievedLabel: `Capaian s/d Pekan ${currentWeek}`,
+    freeMembers,
+    byWeek,
   };
 
   // 5. Hitung Tab Counts (Semua Anggota, Belum Presensi, Belum Infaq)

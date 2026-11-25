@@ -200,7 +200,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
     });
     window.setTimeout(() => {
       setToast(null);
-    }, 3200);
+    }, 2000);
   }
 
   // Input manual infaq: modal dibaca dari data terbaru (rowKey) agar rincian ikut ter-update setelah simpan
@@ -370,7 +370,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
             {/* Tab View 2: Registrasi */}
             {mainTab === "registrasi" && (
               <RegistrasiView
-                onShowToast={setToast}
+                onShowToast={(nextToast) => showTimedToast(nextToast, 2000)}
                 selectedBatchLabel={currentBatchLabel}
                 selectedBatchId={selectedFilters.batchId || data.filters.selected?.batchId}
                 selectedBatchIds={selectedFilters.batchIds || []}

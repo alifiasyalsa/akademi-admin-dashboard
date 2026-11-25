@@ -1,4 +1,6 @@
 export function AttendanceCard({ attendance }) {
+  const byLevel = attendance?.byLevel || [];
+
   return (
     <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200">
       <div className="flex items-center justify-between">
@@ -41,6 +43,41 @@ export function AttendanceCard({ attendance }) {
             </span>
           ))}
         </div>
+
+        {byLevel.length > 0 && (
+          <div className="pt-3 mt-1 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Per Level (Pekan Ini)
+              </p>
+              <p className="text-[10px] text-slate-400">Urut partisipasi terbesar</p>
+            </div>
+            <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
+              {byLevel.map((row, index) => (
+                <li
+                  key={row.level}
+                  className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/80 px-2.5 py-1.5"
+                  title={`${row.level}: ${row.hadir} hadir • ${row.tidakHadir} tidak hadir • ${row.belumDiisi} belum diisi • ${row.belumBerjalan} belum berjalan`}
+                >
+                  <span className="w-5 h-5 rounded-md bg-surface border border-slate-200 text-[10px] font-bold text-slate-500 flex items-center justify-center shrink-0 tabular-nums">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{row.level}</p>
+                    <p className="text-[10px] text-slate-500 tabular-nums">
+                      {row.students} anggota ({row.share}) • {row.hadir}H / {row.tidakHadir}A
+                      {row.belumDiisi > 0 ? ` • ${row.belumDiisi} belum diisi` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-bold tabular-nums text-brand-700">{row.rate}</p>
+                    <p className="text-[10px] text-slate-400">kehadiran</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

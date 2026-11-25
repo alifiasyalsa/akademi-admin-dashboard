@@ -17,7 +17,9 @@ export function RegistrasiRow({ participant, onActionClick }) {
     statusDetail,
     actionType,
     actionLabel,
+    reminderCount = 0,
   } = participant;
+  const contactCount = Number(reminderCount) || 0;
 
   // Badge Tipe Registrasi styling
   let tipeBadgeClass = "bg-slate-100 text-slate-700 border-slate-200";
@@ -135,34 +137,48 @@ export function RegistrasiRow({ participant, onActionClick }) {
 
       {/* 6. Aksi */}
       <td className="py-space-md px-space-lg text-right">
-        {status === "followup" ? (
-          <button
-            type="button"
-            onClick={() => onActionClick(participant)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-sm shadow-amber-200 cursor-pointer"
+        <div className="inline-flex flex-col items-end gap-1">
+          {status === "followup" ? (
+            <button
+              type="button"
+              onClick={() => onActionClick(participant)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all active:scale-95 bg-amber-700 hover:bg-amber-800 text-white shadow-sm shadow-amber-200 cursor-pointer"
+            >
+              <MaterialIcon name="priority_high" className="text-[16px]" />
+              <span>Follow-up Mendesak</span>
+            </button>
+          ) : status === "reminded" ? (
+            <button
+              type="button"
+              onClick={() => onActionClick(participant)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-label-md text-label-md font-medium transition-all active:scale-95 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shadow-sm cursor-pointer"
+            >
+              <MaterialIcon name="history" className="text-[16px] text-slate-500" />
+              <span>Kirim Ulang WA</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onActionClick(participant)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200 cursor-pointer"
+            >
+              <MaterialIcon name="chat" className="text-[16px]" />
+              <span>Kirim WA</span>
+            </button>
+          )}
+          <p
+            className={`text-[11px] font-semibold tabular-nums leading-none ${
+              contactCount === 0
+                ? "text-slate-400"
+                : contactCount >= 3
+                ? "text-amber-700"
+                : "text-slate-500"
+            }`}
+            title={`Total pengingat WA registrasi: ${contactCount}x`}
           >
-            <MaterialIcon name="priority_high" className="text-[16px]" />
-            <span>Follow-up Mendesak</span>
-          </button>
-        ) : status === "reminded" ? (
-          <button
-            type="button"
-            onClick={() => onActionClick(participant)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-label-md text-label-md font-medium transition-all active:scale-95 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shadow-sm cursor-pointer"
-          >
-            <MaterialIcon name="history" className="text-[16px] text-slate-500" />
-            <span>Kirim Ulang WA</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onActionClick(participant)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm transition-all active:scale-95 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200 cursor-pointer"
-          >
-            <MaterialIcon name="chat" className="text-[16px]" />
-            <span>Kirim WA</span>
-          </button>
-        )}
+            {contactCount === 0 ? "Belum dihubungi" : `Sudah dihubungi ${contactCount}x`}
+          </p>
+        </div>
       </td>
     </tr>
   );
