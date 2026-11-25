@@ -38,10 +38,143 @@ const EMPTY_VIEW = {
   batchCounts: {},
 };
 
+async function fetchOneBatchRaw(batchKey, { force = false } = {}) {
+  const [
+    resWait,
+    resPending,
+    resNotConfirm,
+    resCancel,
+    resDelete,
+    resConfirm,
+    resTotal,
+    reminderLogsMap,
+  ] = await Promise.all([
+    // fetchAll: jangan potong di 100 baris pertama — santri di halaman berikutnya ikut tampil
+    cmsApi
+      .getClassRegisters({ batch: batchKey, status: "wait", limit: 100, fetchAll: true, force })
+      .catch(() => ({ data: [], total: 0 })),
+    cmsApi
+      .getClassRegisters({ batch: batchKey, status: "pending", limit: 100, fetchAll: true, force })
+      .catch(() => ({ data: [], total: 0 })),
+    cmsApi
+      .getClassRegisters({ batch: batchKey, status: "not_confirm", limit: 100, fetchAll: true, force })
+      .catch(() => ({ data: [], total: 0 })),
+    cmsApi
+      .getClassRegisters({ batch: batchKey, status: "cancel", limit: 100, fetchAll: true, force })
+      .catch(() => ({ data: [], total: 0 })),
+    cmsApi
+      .getClassRegisters({ batch: batchKey, status: "delete", limit: 100, fetchAll: true, force })
+      .catch(() => ({ data: [], total: 0 })),
+    cmsApi
+      .getClassRegisters({ batch: batchKey, status: "confirm", limit: 10, force })
+      .catch(() => ({ total: 0 })),
+    cmsApi
+      .getClassRegisters({ batch: batchKey, limit: 1, force })
+      .catch(() => ({ recordsTotal: 0, total: 0 })),
+    reminderTrackingService.fetchBatchReminders(batchKey, "registrasi").catch(() => null),
+  ]);
+
+  const studentMap = new Map();
+  [
+    ...(resWait?.data || []),
+    ...(resPending?.data || []),
+    ...(resNotConfirm?.data || []),
+    ...(resCancel?.data || []),
+    ...(resDelete?.data || []),
+  ].forEach((row) => {
+    const id = String(row.id || row.member_id);
+    if (!studentMap.has(id)) studentMap.set(id, row);
+  });
+
+  const statusCounts = {
+    totalBatch: resTotal?.recordsTotal || resTotal?.total || 0,
+    confirmed: resConfirm?.recordsFiltered || resConfirm?.total || 0,
+    wait: resWait?.recordsFiltered ?? resWait?.data?.length ?? 0,
+    pending: resPending?.recordsFiltered ?? resPending?.data?.length ?? 0,
+    notConfirm: resNotConfirm?.recordsFiltered ?? resNotConfirm?.data?.length ?? 0,
+    cancel: resCancel?.recordsFiltered ?? resCancel?.data?.length ?? 0,
+    delete: resDelete?.recordsFiltered ?? resDelete?.data?.length ?? 0,
+  };
+
+  return {
+    batchKey: String(batchKey),
+    nonConfirmList: Array.from(studentMap.values()),
+    statusCounts,
+    reminderLogsMap,
+  };
+}
+
+function mergeBatchVms(batchResults) {
+  if (batchResults.length === 0) return EMPTY_VIEW;
+
+  const vms = batchResults.map((one) =>
+    buildRegistrasiViewModel(one.nonConfirmList, one.statusCounts, one.reminderLogsMap, one.batchKey)
+  );
+  if (vms.length === 1) return vms[0];
+
+  const participants = vms.flatMap((vm) => vm.participants);
+  const sumKey = (key) => vms.reduce((acc, vm) => acc + (Number(vm.batchCounts?.[key]) || 0), 0);
+
+  const waitCount = sumKey("wait");
+  const pendingCount = sumKey("pending");
+  const notConfirmCount = sumKey("notConfirm");
+  const cancelCount = sumKey("cancel");
+  const deleteCount = sumKey("delete");
+  const confirmedCount = sumKey("confirmed");
+  const totalBatch = sumKey("totalBatch");
+  const urgentCount = sumKey("attention");
+  const unremindedCount = sumKey("unreminded");
+
+  const classes = [...new Set(participants.map((p) => p.kelas).filter((k) => k && k !== "none"))];
+
+  return {
+    participants,
+    totalItems: participants.length,
+    batchCounts: {
+      all: participants.length,
+      wait: waitCount,
+      pending: pendingCount,
+      notConfirm: notConfirmCount,
+      cancel: cancelCount,
+      delete: deleteCount,
+      attention: urgentCount,
+      unreminded: unremindedCount,
+      confirmed: confirmedCount,
+      totalBatch,
+    },
+    summary: {
+      unselected: {
+        count: waitCount,
+        totalBatchStudents: totalBatch,
+        percentage: totalBatch > 0 ? Number(((waitCount / totalBatch) * 100).toFixed(1)) : 0,
+        selectedCount: confirmedCount,
+        waitCount,
+        pendingCount,
+        notConfirmCount,
+        cancelCount,
+        deleteCount,
+      },
+      followup: {
+        urgentCount,
+        pendingPercentage: waitCount > 0 ? Math.round((urgentCount / waitCount) * 100) : 0,
+        label: "Mendesak",
+        criteria: "santri melewati batas waktu follow-up (>3 hari)",
+      },
+    },
+    classOptions: [
+      { id: "all", label: "Semua Rekomendasi" },
+      ...classes.map((k) => ({ id: k, label: k })),
+      { id: "none", label: "Belum Ada Rekomendasi" },
+    ],
+  };
+}
+
 export function RegistrasiView({
   onShowToast,
   selectedBatchLabel = "Batch 14 (Aktif)",
   selectedBatchId,
+  selectedBatchIds,
+  batchOptions = [],
   onPendingCountChange,
 }) {
   const [loading, setLoading] = useState(false);
@@ -52,10 +185,31 @@ export function RegistrasiView({
     DEFAULT_TEMPLATES.filter((t) => t.category === "registrasi")
   );
 
-  const batchKey = selectedBatchId || "14";
-  const batchDisplay = selectedBatchLabel || "Batch 14 (Aktif)";
+  const batchIds = useMemo(() => {
+    if (Array.isArray(selectedBatchIds) && selectedBatchIds.length > 0) {
+      return selectedBatchIds.map(String);
+    }
+    if (selectedBatchId) return [String(selectedBatchId)];
+    return [];
+  }, [selectedBatchIds, selectedBatchId]);
 
-  // Ambil seluruh data santri non-confirm (wait, pending, not_confirm) + cache 30 menit
+  const batchLabelById = useMemo(() => {
+    const map = new Map();
+    (batchOptions || []).forEach((b) => map.set(String(b.id), b.label || `Batch ${b.id}`));
+    return map;
+  }, [batchOptions]);
+
+  const batchDisplay = useMemo(() => {
+    if (batchIds.length === 0) return "Belum ada batch";
+    if (batchIds.length === 1) {
+      return batchLabelById.get(batchIds[0]) || selectedBatchLabel || `Batch ${batchIds[0]}`;
+    }
+    return `${batchIds.length} Batch Dipilih`;
+  }, [batchIds, batchLabelById, selectedBatchLabel]);
+
+  const batchCacheKey = batchIds.join(",") || "__none__";
+
+  // Ambil data santri non-confirm untuk semua batch terpilih + cache 30 menit per batch
   const loadRegistrasi = useCallback(
     async ({ force = false } = {}) => {
       if (!tokenManager.hasValidAuth()) {
@@ -64,123 +218,54 @@ export function RegistrasiView({
         return;
       }
 
-      const cached = registrasiMemoryCache.get(batchKey);
-      const isCacheValid = cached && Date.now() - cached.timestamp < REGISTRASI_CACHE_TTL;
-
-      // Jika cache masih berlaku dan tidak dipaksa refresh, gunakan cache memori langsung
-      if (!force && isCacheValid) {
-        setView(cached.vm);
-        setLastSyncTime(cached.syncTime);
-        onPendingCountChange?.(cached.vm.summary.unselected.count);
+      if (batchIds.length === 0) {
+        setView(EMPTY_VIEW);
+        setLastSyncTime("");
+        onPendingCountChange?.(0);
         return;
       }
 
       try {
         setLoading(true);
 
-        // Fetch targeted: tarik status yang belum masuk kelas & status dibatalkan/mundur
-        const [
-          resWait,
-          resPending,
-          resNotConfirm,
-          resCancel,
-          resDelete,
-          resConfirm,
-          resTotal,
-          reminderLogsMap,
-        ] = await Promise.all([
-          // 1. Santri belum pilih kelas
-          cmsApi
-            .getClassRegisters({ batch: batchKey, status: "wait", limit: 100, force })
-            .catch(() => ({ data: [], total: 0 })),
-          // 2. Santri belum bayar
-          cmsApi
-            .getClassRegisters({ batch: batchKey, status: "pending", limit: 100, force })
-            .catch(() => ({ data: [], total: 0 })),
-          // 3. Santri lewat batas konfirmasi
-          cmsApi
-            .getClassRegisters({ batch: batchKey, status: "not_confirm", limit: 100, force })
-            .catch(() => ({ data: [], total: 0 })),
-          // 4. Santri mengundurkan diri (cancel)
-          cmsApi
-            .getClassRegisters({ batch: batchKey, status: "cancel", limit: 100, force })
-            .catch(() => ({ data: [], total: 0 })),
-          // 5. Santri dibatalkan admin (delete)
-          cmsApi
-            .getClassRegisters({ batch: batchKey, status: "delete", limit: 100, force })
-            .catch(() => ({ data: [], total: 0 })),
-          // 6. Santri confirm (hanya ambil count pendaftar yang sudah masuk kelas)
-          cmsApi
-            .getClassRegisters({ batch: batchKey, status: "confirm", limit: 10, force })
-            .catch(() => ({ total: 0 })),
-          // 7. Total semua pendaftar (tanpa filter status)
-          cmsApi
-            .getClassRegisters({ batch: batchKey, limit: 1, force })
-            .catch(() => ({ recordsTotal: 0, total: 0 })),
-          // 8. Histori Supabase
-          reminderTrackingService
-            .fetchBatchReminders(batchKey, "registrasi")
-            .catch(() => null),
-        ]);
-
-        // Gabungkan seluruh santri non-confirm tanpa duplikat ID
-        const studentMap = new Map();
-        [
-          ...(resWait?.data || []),
-          ...(resPending?.data || []),
-          ...(resNotConfirm?.data || []),
-          ...(resCancel?.data || []),
-          ...(resDelete?.data || []),
-        ].forEach((row) => {
-          const id = String(row.id || row.member_id);
-          if (!studentMap.has(id)) {
-            studentMap.set(id, row);
+        const batchResults = [];
+        for (const batchKey of batchIds) {
+          const cached = registrasiMemoryCache.get(batchKey);
+          const isCacheValid = Boolean(cached && Date.now() - cached.timestamp < REGISTRASI_CACHE_TTL && cached.raw);
+          if (!force && isCacheValid) {
+            batchResults.push(cached.raw);
+            continue;
           }
-        });
-        const nonConfirmList = Array.from(studentMap.values());
 
-        // Statistik pendaftar batch asli
-        const totalBatch = resTotal?.recordsTotal || resTotal?.total || 0;
-        const confirmed = resConfirm?.recordsFiltered || resConfirm?.total || 0;
-        const waitCount = resWait?.recordsFiltered ?? resWait?.data?.length ?? 0;
-        const pendingCount = resPending?.recordsFiltered ?? resPending?.data?.length ?? 0;
-        const notConfirmCount =
-          resNotConfirm?.recordsFiltered ?? resNotConfirm?.data?.length ?? 0;
-        const cancelCount = resCancel?.recordsFiltered ?? resCancel?.data?.length ?? 0;
-        const deleteCount = resDelete?.recordsFiltered ?? resDelete?.data?.length ?? 0;
+          const raw = await fetchOneBatchRaw(batchKey, { force });
+          const vm = buildRegistrasiViewModel(
+            raw.nonConfirmList,
+            raw.statusCounts,
+            raw.reminderLogsMap,
+            raw.batchKey
+          );
+          const syncTime = new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          registrasiMemoryCache.set(batchKey, {
+            timestamp: Date.now(),
+            vm,
+            raw,
+            syncTime,
+          });
+          batchResults.push(raw);
+        }
 
-        const statusCounts = {
-          totalBatch,
-          confirmed,
-          wait: waitCount,
-          pending: pendingCount,
-          notConfirm: notConfirmCount,
-          cancel: cancelCount,
-          delete: deleteCount,
-        };
-
-        const vm = buildRegistrasiViewModel(
-          nonConfirmList,
-          statusCounts,
-          reminderLogsMap,
-          batchKey
-        );
-
+        const merged = mergeBatchVms(batchResults);
         const syncTime = new Date().toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
         });
 
-        // Simpan ke memory cache
-        registrasiMemoryCache.set(batchKey, {
-          timestamp: Date.now(),
-          vm,
-          syncTime,
-        });
-
-        setView(vm);
+        setView(merged);
         setLastSyncTime(syncTime);
-        onPendingCountChange?.(vm.summary.unselected.count);
+        onPendingCountChange?.(merged.summary.unselected.count);
       } catch (err) {
         console.warn("Gagal sinkronisasi data registrasi:", err);
         setView(MOCK_VIEW);
@@ -194,12 +279,12 @@ export function RegistrasiView({
         setLoading(false);
       }
     },
-    [batchKey, onShowToast, onPendingCountChange]
+    [batchIds, onShowToast, onPendingCountChange]
   );
 
   useEffect(() => {
     loadRegistrasi();
-  }, [loadRegistrasi]);
+  }, [loadRegistrasi, batchCacheKey]);
 
   function handleRefresh() {
     onShowToast?.({
@@ -229,11 +314,15 @@ export function RegistrasiView({
     if (!participant) return;
 
     const phone = participant.rawPhone || participant.phone;
-    
+    const targetBatch = participant.batchId || batchIds[0] || "";
+    const targetBatchLabel =
+      batchLabelById.get(String(targetBatch)) || selectedBatchLabel || `Batch ${targetBatch}`;
+
     // 1. Tentukan status_key santri
     let statusKey = "wait";
     if (participant.regStatus === "pending") statusKey = "pending";
-    else if (participant.regStatus === "not confirm" || participant.regStatus === "not_confirm") statusKey = "not_confirm";
+    else if (participant.regStatus === "not confirm" || participant.regStatus === "not_confirm")
+      statusKey = "not_confirm";
     else if (participant.regStatus === "cancel") statusKey = "cancel";
 
     // 2. Cari template default yang aktif di Supabase/state
@@ -246,17 +335,17 @@ export function RegistrasiView({
     if (activeTemplate && activeTemplate.content) {
       message = templateService.interpolate(activeTemplate.content, {
         nama: participant.name || "Sahabat",
-        batch: cleanBatchLabel(batchDisplay),
-        rekomendasi_kelas: participant.kelas && participant.kelas !== "none" ? participant.kelas : "Belum ditentukan",
+        batch: cleanBatchLabel(targetBatchLabel),
+        rekomendasi_kelas:
+          participant.kelas && participant.kelas !== "none" ? participant.kelas : "Belum ditentukan",
         tipe: participant.tipe || "Pendaftar",
         status: participant.regStatusLabel || "Belum Pilih Kelas",
       });
     } else {
-      // Fallback bawaan jika template belum dimuat
       message = buildWaMessage({
         waType: "registrasi",
         student: participant,
-        batchName: batchDisplay,
+        batchName: targetBatchLabel,
       });
     }
 
@@ -279,23 +368,22 @@ export function RegistrasiView({
       .recordReminder({
         domain: "registrasi",
         memberId: participant.memberId || participant.id,
-        contextId: `batch_${batchKey}`,
+        contextId: `batch_${targetBatch}`,
         memberName: participant.name,
         memberPhone: phone,
-        batchId: Number(batchKey),
+        batchId: targetBatch ? Number(targetBatch) : null,
         classId: null,
         notes: activeTemplate?.title || "Pengingat pendaftaran",
         currentCount: participant.reminderCount || 0,
       })
       .then(() => {
-        // Update cache lokal langsung agar tombol dan badge instan ter-update tanpa reload lambat
         loadRegistrasi({ force: true });
       });
 
     onShowToast?.({
       icon: "event_available",
       title: `WhatsApp Terkirim: ${participant.name}`,
-      subtitle: `Menggunakan "${activeTemplate?.title || 'Template Resmi'}" • Tercatat di Supabase`,
+      subtitle: `Menggunakan "${activeTemplate?.title || "Template Resmi"}" • Tercatat di Supabase`,
     });
   }
 
@@ -318,6 +406,13 @@ export function RegistrasiView({
           >
             Segarkan Sekarang
           </button>
+        </div>
+      )}
+
+      {batchIds.length === 0 && tokenManager.hasValidAuth() && (
+        <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          Belum ada batch yang dipilih. Centang minimal satu batch di filter atas (bisa Pilih Semua /
+          Hapus Semua).
         </div>
       )}
 
@@ -351,4 +446,3 @@ export function RegistrasiView({
     </div>
   );
 }
-

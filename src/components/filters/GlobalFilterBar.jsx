@@ -47,33 +47,20 @@ export function GlobalFilterBar({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-xl bg-slate-50 border border-slate-200 shrink-0">
-          {/* Batch Selector: multi-pilih di Monitoring, tunggal di Registrasi (data registrasi per batch) */}
-          {isRegistrasi ? (
-            <SearchableSelect
-              options={filters.batches}
-              value={selection.batchId}
-              onChange={(newBatchId) =>
-                onSelectionChange({ ...selection, batchId: newBatchId, batchIds: [newBatchId] })
-              }
-              placeholder="Pilih Batch..."
-              searchPlaceholder="Ketik nomor/nama batch..."
-              minWidth="min-w-[170px]"
-            />
-          ) : (
-            <ChecklistSelect
-              options={filters.batches}
-              value={selection.batchIds || (selection.batchId ? [selection.batchId] : [])}
-              onChange={(newBatchIds) => onSelectionChange({ ...selection, batchIds: newBatchIds })}
-              allLabel="Semua Batch"
-              placeholder="Pilih Batch..."
-              title="Pilih Batch"
-              unitLabel="Batch"
-              icon="layers"
-              busy={batchesPending}
-              align="left"
-              minWidth="min-w-[170px]"
-            />
-          )}
+          {/* Batch Selector: multi-pilih (checklist + Pilih Semua / Hapus Semua) di Monitoring & Registrasi */}
+          <ChecklistSelect
+            options={filters.batches}
+            value={selection.batchIds || (selection.batchId ? [selection.batchId] : [])}
+            onChange={(newBatchIds) => onSelectionChange({ ...selection, batchIds: newBatchIds })}
+            allLabel="Semua Batch"
+            placeholder="Pilih Batch..."
+            title="Pilih Batch"
+            unitLabel="Batch"
+            icon="layers"
+            busy={batchesPending}
+            align="left"
+            minWidth="min-w-[170px]"
+          />
 
           <div className="h-5 w-[1px] hidden sm:block bg-slate-300" />
 

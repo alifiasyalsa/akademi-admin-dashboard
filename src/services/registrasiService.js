@@ -45,6 +45,13 @@ export function toParticipant(register, reminderLogsMap = null, batchId = null, 
 
   const name = register.name || register.member_name || "Tanpa Nama";
   const phone = register.phone || register.member_phone || "";
+  const email =
+    register.email ||
+    register.member_email ||
+    register.member?.email ||
+    register.user?.email ||
+    register.profile?.email ||
+    "";
 
   // 1. Status Pendaftaran Resmi dari CMS
   const regStatus = String(register.status || "wait").trim().toLowerCase();
@@ -99,13 +106,17 @@ export function toParticipant(register, reminderLogsMap = null, batchId = null, 
     }
   }
 
+  const batchKey = batchId != null && batchId !== "" ? String(batchId) : "";
+
   return {
-    id: String(register.id || register.member_id || ""),
+    id: batchKey ? `${batchKey}:${register.id || register.member_id || ""}` : String(register.id || register.member_id || ""),
     memberId,
+    batchId: batchKey,
     name,
     initials: getInitials(name),
     phone: formatPhoneDisplay(phone),
     rawPhone: phone,
+    email: email || "",
     tipe: toTipe(register.registration_type),
     kelas: register.suggested_class_name || register.selected_class_name || "none",
     regStatus,

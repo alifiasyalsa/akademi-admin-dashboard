@@ -269,7 +269,12 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
   const selectedClassLabel =
     data.filters?.classes?.find((c) => String(c.id) === String(selectedFilters.classId))?.label?.split(" • ")[0] || "";
   const monitoringExportParts = [selectedBatchLabels, selectedClassLabel];
-  const currentBatchId = selectedFilters.batchId || data.filters.selected?.batchId;
+  const currentBatchIds = selectedFilters.batchIds?.length
+    ? selectedFilters.batchIds
+    : selectedFilters.batchId
+    ? [selectedFilters.batchId]
+    : [];
+  const currentBatchIdsKey = currentBatchIds.join(",");
 
   // Sinkronisasi data real pendaftar (status wait) untuk badge tab registrasi & info bar
   useEffect(() => {
@@ -278,15 +283,24 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
       return;
     }
 
-    if (!currentBatchId) return;
+    const ids = currentBatchIdsKey ? currentBatchIdsKey.split(",") : [];
+    if (ids.length === 0) {
+      setPendingRegistrasiCount(0);
+      return;
+    }
 
     let isMounted = true;
-    cmsApi
-      .getClassRegisters({ batch: currentBatchId, status: "wait", limit: 10 })
-      .then((res) => {
+    Promise.all(
+      ids.map((batchId) =>
+        cmsApi
+          .getClassRegisters({ batch: batchId, status: "wait", limit: 10 })
+          .then((res) => res?.total || (Array.isArray(res?.data) ? res.data.length : 0))
+          .catch(() => 0)
+      )
+    )
+      .then((counts) => {
         if (!isMounted) return;
-        const waitCount = res?.total || (Array.isArray(res?.data) ? res.data.length : 0);
-        setPendingRegistrasiCount(waitCount);
+        setPendingRegistrasiCount(counts.reduce((sum, n) => sum + (Number(n) || 0), 0));
       })
       .catch((err) => {
         console.warn("Gagal sinkronisasi pending registrasi count:", err);
@@ -295,7 +309,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
     return () => {
       isMounted = false;
     };
-  }, [currentBatchId]);
+  }, [currentBatchIdsKey]);
 
   return (
     <>
@@ -359,6 +373,8 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
                 onShowToast={setToast}
                 selectedBatchLabel={currentBatchLabel}
                 selectedBatchId={selectedFilters.batchId || data.filters.selected?.batchId}
+                selectedBatchIds={selectedFilters.batchIds || []}
+                batchOptions={data.filters?.batches || []}
                 onPendingCountChange={setPendingRegistrasiCount}
               />
             )}

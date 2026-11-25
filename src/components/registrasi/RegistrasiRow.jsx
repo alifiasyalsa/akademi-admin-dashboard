@@ -6,6 +6,7 @@ export function RegistrasiRow({ participant, onActionClick }) {
     name,
     initials,
     phone,
+    email,
     tipe,
     kelas,
     regStatus,
@@ -24,6 +25,8 @@ export function RegistrasiRow({ participant, onActionClick }) {
     tipeBadgeClass = "bg-brand-50 text-brand-600 border-brand-200";
   } else if (tipe === "New") {
     tipeBadgeClass = "bg-teal-50 text-teal-700 border-teal-200";
+  } else if (tipe === "Stay") {
+    tipeBadgeClass = "bg-violet-50 text-violet-700 border-violet-200";
   }
 
   // Styling badge status registrasi CMS
@@ -60,6 +63,11 @@ export function RegistrasiRow({ participant, onActionClick }) {
             <p className="font-body-sm text-body-sm font-mono text-slate-500">
               {phone}
             </p>
+            {email ? (
+              <p className="font-label-sm text-label-sm text-slate-400 truncate max-w-[14rem]" title={email}>
+                {email}
+              </p>
+            ) : null}
           </div>
         </div>
       </td>

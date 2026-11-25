@@ -16,9 +16,17 @@ const TAB_LABELS = {
   unreminded: "Belum Diingatkan",
 };
 
+const TIPE_OPTIONS = [
+  { id: "all", label: "Semua Tipe" },
+  { id: "Promoted", label: "Promoted" },
+  { id: "Stay", label: "Stay" },
+  { id: "New", label: "New" },
+];
+
 const REGISTRASI_COLUMNS = [
   { header: "Nama", value: (p) => p.name },
   { header: "No. HP", value: (p) => p.phone },
+  { header: "Email", value: (p) => p.email || "" },
   { header: "Status Pendaftaran", value: (p) => p.regStatusLabel || "Belum Pilih Kelas" },
   { header: "Tipe", value: (p) => p.tipe },
   { header: "Kelas Rekomendasi", value: (p) => (p.kelas && p.kelas !== "none" ? p.kelas : "") },
@@ -39,6 +47,7 @@ export function RegistrasiTable({
 }) {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedClass, setSelectedClass] = useState("all");
+  const [selectedTipe, setSelectedTipe] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -63,7 +72,10 @@ export function RegistrasiTable({
         if (p.status !== "unreminded" && p.status !== "belum") return false;
       }
 
-      // 2. Filter Rekomendasi Kelas
+      // 2. Filter Tipe Pendaftar (Promoted / Stay / New)
+      if (selectedTipe !== "all" && p.tipe !== selectedTipe) return false;
+
+      // 3. Filter Rekomendasi Kelas
       if (selectedClass !== "all") {
         if (selectedClass === "none") {
           if (p.kelas && p.kelas !== "none") return false;
@@ -72,18 +84,19 @@ export function RegistrasiTable({
         }
       }
 
-      // 3. Filter Pencarian Nama / Nomor HP
+      // 4. Filter Pencarian Nama / Nomor HP / Email
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesName = p.name?.toLowerCase().includes(query);
         const matchesPhone =
           p.phone?.toLowerCase().includes(query) || p.rawPhone?.toLowerCase().includes(query);
-        if (!matchesName && !matchesPhone) return false;
+        const matchesEmail = p.email?.toLowerCase().includes(query);
+        if (!matchesName && !matchesPhone && !matchesEmail) return false;
       }
 
       return true;
     });
-  }, [participants, activeTab, selectedClass, searchQuery]);
+  }, [participants, activeTab, selectedTipe, selectedClass, searchQuery]);
 
   // Kalkulasi Paginasi Client-Side yang Ringan & Cepat
   const totalItems = filteredParticipants.length;
@@ -115,22 +128,30 @@ export function RegistrasiTable({
   // Reset ke halaman 1 saat filter atau pencarian berubah
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, selectedClass, searchQuery]);
+  }, [activeTab, selectedTipe, selectedClass, searchQuery]);
 
   function handleExportCsv() {
     const tabLabel = TAB_LABELS[activeTab] || activeTab;
+    const tipeLabel = selectedTipe !== "all" ? selectedTipe : null;
     const classLabel =
       selectedClass !== "all" ? classRecommendations.find((opt) => opt.id === selectedClass)?.label || selectedClass : null;
     downloadCsv({
-      fileParts: ["registrasi", batchLabel, tabLabel, classLabel, searchQuery && `cari-${searchQuery}`],
+      fileParts: ["registrasi", batchLabel, tabLabel, tipeLabel, classLabel, searchQuery && `cari-${searchQuery}`],
       rows: filteredParticipants,
       columns: REGISTRASI_COLUMNS,
-      context: { tab: "registrasi", filter: tabLabel, class: classLabel, search: searchQuery || null },
+      context: {
+        tab: "registrasi",
+        filter: tabLabel,
+        tipe: tipeLabel,
+        class: classLabel,
+        search: searchQuery || null,
+      },
     });
   }
 
   function handleReset() {
     setActiveTab("all");
+    setSelectedTipe("all");
     setSelectedClass("all");
     setSearchQuery("");
     setCurrentPage(1);
@@ -150,6 +171,17 @@ export function RegistrasiTable({
     batchCounts?.delete ?? participants.filter((p) => p.regStatus === "delete").length;
   const countAttention =
     batchCounts?.attention ?? participants.filter((p) => p.status === "followup").length;
+
+  // Hitungan filter Tipe (Promoted / Stay / New) dari dataset aktif
+  const tipeCounts = useMemo(() => {
+    const counts = { all: participants.length, Promoted: 0, Stay: 0, New: 0 };
+    participants.forEach((p) => {
+      if (p.tipe === "Promoted") counts.Promoted += 1;
+      else if (p.tipe === "Stay") counts.Stay += 1;
+      else if (p.tipe === "New") counts.New += 1;
+    });
+    return counts;
+  }, [participants]);
 
   return (
     <section className="bg-surface rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -372,7 +404,7 @@ export function RegistrasiTable({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari santri/kontak..."
+              placeholder="Cari santri/kontak/email..."
               className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400"
             />
           </div>
@@ -387,6 +419,40 @@ export function RegistrasiTable({
             <MaterialIcon name="sync" className="text-[18px]" />
           </button>
         </div>
+      </div>
+
+      {/* Filter Tipe: Promoted / Stay / New */}
+      <div className="px-5 pb-2.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto border-b border-slate-200 bg-surface">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mr-1 shrink-0">
+          Tipe
+        </span>
+        {TIPE_OPTIONS.map((opt) => {
+          const isActive = selectedTipe === opt.id;
+          const count = tipeCounts[opt.id] ?? 0;
+          const activeTone =
+            opt.id === "Promoted"
+              ? "bg-brand-600 text-white border-brand-600"
+              : opt.id === "Stay"
+              ? "bg-violet-600 text-white border-violet-600"
+              : opt.id === "New"
+              ? "bg-teal-600 text-white border-teal-600"
+              : "bg-slate-800 text-white border-slate-800";
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setSelectedTipe(opt.id)}
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                isActive
+                  ? activeTone
+                  : "bg-surface text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>{opt.label}</span>
+              <span className={isActive ? "text-white/80" : "text-slate-400"}>({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* 2. Table / Empty State View */}
@@ -430,7 +496,7 @@ export function RegistrasiTable({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-600 font-label-sm text-label-sm uppercase tracking-wider border-b border-slate-200">
-                <th className="py-space-md px-space-lg font-semibold">Nama Peserta</th>
+                <th className="py-space-md px-space-lg font-semibold">Nama & Kontak</th>
                 <th className="py-space-md px-space-md font-semibold">Status Pendaftaran</th>
                 <th className="py-space-md px-space-md font-semibold">Tipe</th>
                 <th className="py-space-md px-space-md font-semibold">Kelas Rekomendasi</th>
