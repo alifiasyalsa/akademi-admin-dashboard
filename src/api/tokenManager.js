@@ -1,10 +1,16 @@
 /**
  * Token Manager
- * Bertanggung jawab menyimpan dan mengambil access token dan refresh token.
- * 
- * Prioritas penyimpanan:
- * 1. window.sessionStorage / localStorage (agar user bisa paste token dari UI / console)
- * 2. import.meta.env (VITE_ACCESS_TOKEN / VITE_REFRESH_TOKEN) untuk kemudahan development lokal
+ * Bertanggung jawab menyimpan dan mengambil access token dan refresh token CMS.
+ *
+ * Sumber token:
+ * 1. localStorage → token hasil refresh otomatis (lebih baru dari token env).
+ * 2. import.meta.env (VITE_ACCESS_TOKEN / VITE_REFRESH_TOKEN) → token dari Vercel env / .env.local.
+ *
+ * Token tersimpan di localStorage "diikat" ke token env saat ia dibuat (seed). Jika token env
+ * diganti (deploy baru), token tersimpan yang lama otomatis dibuang sehingga token env baru dipakai.
+ *
+ * Jika refresh gagal permanen, sesi ditandai "terputus" (terikat ke token env saat itu) agar dashboard
+ * berhenti mengirim request yang pasti 401. Tanda ini hilang otomatis saat token env diganti.
  *
  * Token TIDAK disimpan di source code / repository.
  */
@@ -13,10 +19,52 @@ const STORAGE_KEYS = {
   ACCESS_TOKEN: "qb_akademi_access_token",
   REFRESH_TOKEN: "qb_akademi_refresh_token",
   TOKEN_EXPIRY: "qb_akademi_token_expiry",
+  TOKEN_SEED: "qb_akademi_token_seed",
+  SESSION_DEAD: "qb_akademi_cms_session_dead",
 };
+
+const ENV_ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || "";
+const ENV_REFRESH_TOKEN = import.meta.env.VITE_REFRESH_TOKEN || "";
+
+// Sidik jari pendek token env (bukan token utuh) untuk mendeteksi pergantian token
+function fingerprint(token) {
+  return token ? `${token.length}:${token.slice(-24)}` : "none";
+}
+const ENV_SEED = fingerprint(ENV_ACCESS_TOKEN);
 
 // Event listener channel untuk notifikasi perubahan status token/sesi
 const listeners = new Set();
+
+function safeGet(key) {
+  try {
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function removeStoredTokens() {
+  try {
+    [STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.REFRESH_TOKEN, STORAGE_KEYS.TOKEN_EXPIRY].forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
+  } catch {
+    // browser storage disabled
+  }
+}
+
+// Token env berganti sejak token tersimpan dibuat → buang token tersimpan yang lama
+(function syncWithEnvToken() {
+  try {
+    if (localStorage.getItem(STORAGE_KEYS.TOKEN_SEED) !== ENV_SEED) {
+      removeStoredTokens();
+      localStorage.setItem(STORAGE_KEYS.TOKEN_SEED, ENV_SEED);
+    }
+  } catch {
+    // browser storage disabled
+  }
+})();
 
 function parseJwtExpiry(token) {
   if (!token || typeof token !== "string") return null;
@@ -39,23 +87,23 @@ function parseJwtExpiry(token) {
 
 export const tokenManager = {
   getAccessToken() {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-      if (stored) return stored;
-    } catch {
-      // browser storage disabled
-    }
-    return import.meta.env.VITE_ACCESS_TOKEN || "";
+    return safeGet(STORAGE_KEYS.ACCESS_TOKEN) || ENV_ACCESS_TOKEN;
   },
 
   getRefreshToken() {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN) || sessionStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-      if (stored) return stored;
-    } catch {
-      // browser storage disabled
-    }
-    return import.meta.env.VITE_REFRESH_TOKEN || "";
+    return safeGet(STORAGE_KEYS.REFRESH_TOKEN) || ENV_REFRESH_TOKEN;
+  },
+
+  getEnvAccessToken() {
+    return ENV_ACCESS_TOKEN;
+  },
+
+  getEnvRefreshToken() {
+    return ENV_REFRESH_TOKEN;
+  },
+
+  hasStoredTokens() {
+    return Boolean(safeGet(STORAGE_KEYS.ACCESS_TOKEN));
   },
 
   setTokens({ accessToken, refreshToken, expiresIn, adminProfile }) {
@@ -69,6 +117,8 @@ export const tokenManager = {
       if (adminProfile) {
         localStorage.setItem("qb_akademi_admin_profile", JSON.stringify(adminProfile));
       }
+      localStorage.setItem(STORAGE_KEYS.TOKEN_SEED, ENV_SEED);
+      localStorage.removeItem(STORAGE_KEYS.SESSION_DEAD);
 
       // Hitung waktu kadaluwarsa dari JWT exp atau parameter expiresIn
       const jwtExp = parseJwtExpiry(accessToken);
@@ -93,18 +143,41 @@ export const tokenManager = {
     }
   },
 
-  clearTokens() {
+  /** Buang token hasil refresh (kembali memakai token env) tanpa menandai sesi terputus. */
+  clearStoredTokens() {
+    removeStoredTokens();
+  },
+
+  /** Token tersimpan maupun token env sudah tidak bisa dipakai / di-refresh. */
+  markSessionDead() {
+    removeStoredTokens();
     try {
-      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRY);
-      sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      sessionStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRY);
+      localStorage.setItem(STORAGE_KEYS.SESSION_DEAD, ENV_SEED);
     } catch {
       // ignore
     }
     this.notify({ type: "SESSION_EXPIRED", hasToken: false });
+  },
+
+  /** Sesi ditandai terputus untuk token env yang sedang dipakai build ini. */
+  isSessionDead() {
+    return safeGet(STORAGE_KEYS.SESSION_DEAD) === ENV_SEED;
+  },
+
+  /** Hapus tanda terputus & token tersimpan agar koneksi dicoba ulang dari token env. */
+  resetSession() {
+    removeStoredTokens();
+    try {
+      localStorage.removeItem(STORAGE_KEYS.SESSION_DEAD);
+    } catch {
+      // ignore
+    }
+    this.notify({ type: "TOKEN_UPDATED", hasToken: Boolean(this.getAccessToken()) });
+  },
+
+  /** @deprecated pakai markSessionDead() */
+  clearTokens() {
+    this.markSessionDead();
   },
 
   hasValidAuth() {
