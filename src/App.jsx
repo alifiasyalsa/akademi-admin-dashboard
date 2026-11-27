@@ -11,6 +11,7 @@ import { WorkbenchTable } from "./components/table/WorkbenchTable.jsx";
 import { AdminGuidance } from "./components/guidance/AdminGuidance.jsx";
 import { RegistrasiView } from "./components/registrasi/RegistrasiView.jsx";
 import { Toast } from "./components/feedback/Toast.jsx";
+import { CmsConnectionBanner } from "./components/feedback/CmsConnectionBanner.jsx";
 import { stitchMock } from "./data/stitchMock.js";
 import { buildWaMessage, openWhatsAppDirectly, cleanBatchLabel } from "./services/waService.js";
 import { reminderTrackingService } from "./services/reminderTrackingService.js";
@@ -47,6 +48,7 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
     authStatus,
     refreshData,
     reloadData,
+    retryConnection,
     onSelectionChange,
     selectedFilters,
     filtersReady,
@@ -323,6 +325,11 @@ export default function App({ currentUser = null, currentRole = "admin", onSignO
         <div className="flex flex-col w-full">
           <Toast toast={toast} />
           <div className="w-full max-w-[1600px] mx-auto px-margin-tablet lg:px-margin-desktop py-space-xl space-y-space-xl">
+            <CmsConnectionBanner
+              expired={authStatus.isExpired}
+              error={loading ? null : error}
+              onRetry={retryConnection}
+            />
             {/* Global Control Plane Bar */}
             <GlobalFilterBar
               filters={data.filters}

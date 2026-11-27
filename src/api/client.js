@@ -3,99 +3,93 @@ import { tokenManager } from "./tokenManager.js";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://plus-api.quranbest.com/v1";
 
 // State kontrol untuk single-flight token refresh
-let isRefreshing = false;
-let refreshQueue = []; // Antrian resolver Promise yang menunggu refresh selesai
-let consecutiveRefreshFailures = 0;
-const MAX_CONSECUTIVE_REFRESH_ATTEMPTS = 2;
+let refreshPromise = null;
 
-function processQueue(error, newAccessToken = null) {
-  refreshQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(newAccessToken);
-    }
-  });
-  refreshQueue = [];
+function sessionDeadError() {
+  const err = new Error(
+    "Koneksi Plus CMS terputus: token kedaluwarsa dan gagal diperbarui. Perbarui token CMS di Vercel lalu redeploy."
+  );
+  err.status = 401;
+  err.code = "CMS_SESSION_DEAD";
+  return err;
 }
 
-/**
- * Mencoba merefresh access token via endpoint autentikasi CMS jika tersedia.
- * Jika CMS tidak menyediakan endpoint refresh publik, atau refresh gagal, sesi ditandai kedaluwarsa.
- */
-async function performTokenRefresh() {
-  const refreshToken = tokenManager.getRefreshToken();
-  if (!refreshToken) {
-    throw new Error("No refresh token available");
-  }
-
-  if (consecutiveRefreshFailures >= MAX_CONSECUTIVE_REFRESH_ATTEMPTS) {
-    tokenManager.clearTokens();
-    throw new Error("Maksimal percobaan refresh token terlampaui. Sesi berakhir.");
-  }
-
+/** Satu percobaan refresh. Network error → `network: true` (jangan anggap sesi mati). */
+async function requestRefresh(refreshToken) {
+  let res;
   try {
-    // Endpoint resmi refresh token CMS QuranBest
-
-    let refreshResponse = null;
-    let refreshPayload = null;
-
-    try {
-      const res = await fetch(`${BASE_URL}/admin/refresh-token`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${refreshToken}`,
-          },
-          body: JSON.stringify({
-            refresh_token: refreshToken,
-            refreshToken: refreshToken,
-          }),
-      });
-      if (res.ok) {
-        refreshResponse = res;
-        refreshPayload = await res.json();
-      }
-    } catch {
-        // try next endpoint if any
-    }
-    
-
-    if (!refreshResponse || !refreshPayload) {
-      consecutiveRefreshFailures += 1;
-      throw new Error("Gagal merefresh access token dari endpoint CMS.");
-    }
-
-    const newAccessToken = refreshPayload.data?.access_token; 
-    const newRefreshToken = refreshPayload.data?.refresh_token;
-
-    if (!newAccessToken) {
-      consecutiveRefreshFailures += 1;
-      throw new Error("Format respons refresh token tidak memuat access_token valid.");
-    }
-
-    // Reset counter kegagalan jika berhasil
-    consecutiveRefreshFailures = 0;
-    tokenManager.setTokens({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
+    res = await fetch(`${BASE_URL}/admin/refresh-token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${refreshToken}`,
+      },
+      body: JSON.stringify({ refresh_token: refreshToken, refreshToken }),
     });
-
-    return newAccessToken;
-  } catch (err) {
-    consecutiveRefreshFailures += 1;
-    if (consecutiveRefreshFailures >= MAX_CONSECUTIVE_REFRESH_ATTEMPTS) {
-      tokenManager.clearTokens();
-    }
-    throw err;
+  } catch {
+    return { ok: false, network: true };
   }
+  if (!res.ok) return { ok: false, network: res.status >= 500 };
+  const payload = await res.json().catch(() => null);
+  const accessToken = payload?.data?.access_token;
+  if (!accessToken) return { ok: false, network: false };
+  return { ok: true, accessToken, refreshToken: payload?.data?.refresh_token };
 }
 
 /**
- * Custom fetcher client dengan automatic Authorization header & auto-refresh token queue
+ * Perbarui access token. Urutan percobaan:
+ * 1. Refresh token yang aktif (tersimpan dari refresh sebelumnya, atau dari env).
+ * 2. Refresh token env, jika berbeda (mis. token tersimpan sudah dicabut).
+ * 3. Access token env langsung, jika berbeda dari token yang barusan ditolak.
+ * Semua gagal karena ditolak server → sesi ditandai terputus.
+ * @returns {Promise<string>} access token yang harus dicoba
+ */
+async function performTokenRefresh(rejectedAccessToken) {
+  const candidates = [...new Set([tokenManager.getRefreshToken(), tokenManager.getEnvRefreshToken()].filter(Boolean))];
+  let networkFailure = false;
+
+  for (const refreshToken of candidates) {
+    const result = await requestRefresh(refreshToken);
+    if (result.ok) {
+      tokenManager.setTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken });
+      return result.accessToken;
+    }
+    if (result.network) networkFailure = true;
+  }
+
+  if (networkFailure) {
+    throw new Error("Tidak dapat menghubungi server CMS untuk memperbarui token. Periksa koneksi lalu coba lagi.");
+  }
+
+  const envAccessToken = tokenManager.getEnvAccessToken();
+  if (tokenManager.hasStoredTokens() && envAccessToken && envAccessToken !== rejectedAccessToken) {
+    tokenManager.clearStoredTokens();
+    return envAccessToken;
+  }
+
+  tokenManager.markSessionDead();
+  throw sessionDeadError();
+}
+
+function refreshOnce(rejectedAccessToken) {
+  if (!refreshPromise) {
+    refreshPromise = performTokenRefresh(rejectedAccessToken).finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+/**
+ * Custom fetcher client dengan automatic Authorization header & auto-refresh token (single-flight)
  */
 export async function apiClient(endpoint, options = {}, isRetry = false) {
+  // Sesi sudah dinyatakan terputus untuk token env build ini: jangan kirim request yang pasti 401
+  if (tokenManager.isSessionDead()) {
+    throw sessionDeadError();
+  }
+
   const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
   const accessToken = tokenManager.getAccessToken();
 
@@ -115,79 +109,37 @@ export async function apiClient(endpoint, options = {}, isRetry = false) {
     body = JSON.stringify(body);
   }
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      body,
-    });
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    body,
+  });
 
-    // Handle 401 Unauthorized
-    if (response.status === 401) {
-      if (isRetry) {
-        // Jika sudah retry setelah refresh tapi tetap 401, hentikan agar tidak loop tak berujung
-        tokenManager.clearTokens();
-        const errorData = await response.json().catch(() => ({}));
-        const err = new Error(errorData.message || "Sesi autentikasi telah berakhir. Silakan masukkan token baru.");
-        err.status = 401;
-        throw err;
-      }
-
-      const refreshToken = tokenManager.getRefreshToken();
-      if (!refreshToken) {
-        tokenManager.clearTokens();
-        const err = new Error("Sesi login berakhir (401 Unauthorized). Silakan perbarui access token CMS.");
-        err.status = 401;
-        throw err;
-      }
-
-      // Jika ada request lain yang sedang merefresh token, masukkan ke antrean Promise
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          refreshQueue.push({
-            resolve: (newToken) => {
-              const retryHeaders = {
-                ...headers,
-                Authorization: `Bearer ${newToken}`,
-              };
-              resolve(apiClient(endpoint, { ...options, headers: retryHeaders }, true));
-            },
-            reject,
-          });
-        });
-      }
-
-      // Inisiasi proses refresh token tunggal (Single-flight)
-      isRefreshing = true;
-      try {
-        const newAccessToken = await performTokenRefresh();
-        processQueue(null, newAccessToken);
-
-        // Ulangi request asli dengan token baru
-        const retryHeaders = {
-          ...headers,
-          Authorization: `Bearer ${newAccessToken}`,
-        };
-        return apiClient(endpoint, { ...options, headers: retryHeaders }, true);
-      } catch (refreshErr) {
-        processQueue(refreshErr, null);
-        throw refreshErr;
-      } finally {
-        isRefreshing = false;
-      }
+  if (response.status === 401) {
+    if (isRetry) {
+      // Token hasil refresh pun ditolak: hentikan agar tidak loop tak berujung
+      tokenManager.markSessionDead();
+      throw sessionDeadError();
     }
 
-    if (!response.ok) {
-      const errorJson = await response.json().catch(() => null);
-      const message = errorJson?.message || `Request failed with HTTP ${response.status}: ${response.statusText}`;
-      const err = new Error(message);
-      err.status = response.status;
-      err.response = errorJson;
-      throw err;
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+    const usedToken = String(headers.Authorization || "").replace(/^Bearer\s+/i, "");
+    const newAccessToken = await refreshOnce(usedToken);
+    const { Authorization: _omit, ...restHeaders } = options.headers || {};
+    return apiClient(
+      endpoint,
+      { ...options, headers: { ...restHeaders, Authorization: `Bearer ${newAccessToken}` } },
+      true
+    );
   }
+
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => null);
+    const message = errorJson?.message || `Request failed with HTTP ${response.status}: ${response.statusText}`;
+    const err = new Error(message);
+    err.status = response.status;
+    err.response = errorJson;
+    throw err;
+  }
+
+  return await response.json();
 }

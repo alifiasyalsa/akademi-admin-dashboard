@@ -73,7 +73,7 @@ export function useWorkbenchData() {
   const [error, setError] = useState(null);
   const [authStatus, setAuthStatus] = useState(() => ({
     hasToken: tokenManager.hasValidAuth(),
-    isExpired: false,
+    isExpired: tokenManager.isSessionDead(),
   }));
 
   // Master options cache
@@ -115,9 +115,9 @@ export function useWorkbenchData() {
     const unsubscribe = tokenManager.subscribe((event) => {
       if (event.type === "SESSION_EXPIRED") {
         setAuthStatus({ hasToken: false, isExpired: true });
-        setError(new Error("Sesi token telah berakhir. Silakan masukkan access token CMS yang baru."));
+        setError(new Error("Koneksi Plus CMS terputus. Perbarui token CMS di Vercel lalu redeploy."));
       } else if (event.type === "TOKEN_UPDATED") {
-        setAuthStatus({ hasToken: true, isExpired: false });
+        setAuthStatus({ hasToken: Boolean(event.hasToken), isExpired: false });
         setError(null);
       }
     });
@@ -556,6 +556,11 @@ export function useWorkbenchData() {
     error,
     authStatus,
     refreshData: () => fetchWorkbenchDetail({ force: true }),
+    // Hapus tanda "koneksi CMS terputus" & token tersimpan, lalu muat ulang dari token env
+    retryConnection: () => {
+      tokenManager.resetSession();
+      return initMasterData();
+    },
     // Tanpa bypass cache CMS: hanya data Supabase (infaq manual, log pengingat) yang terambil ulang
     reloadData: () => fetchWorkbenchDetail(),
     onSelectionChange: handleSelectionChange,
