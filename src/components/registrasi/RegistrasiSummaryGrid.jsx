@@ -15,9 +15,9 @@ export function RegistrasiSummaryGrid({ summary, batchLabel = "Batch 14" }) {
   const totalBatch = unselected.totalBatchStudents ?? 0;
 
   return (
-    <div className="space-y-space-md">
+    <div className="space-y-3 sm:space-y-space-md">
       {/* 1. Barisan Kartu KPI Utama */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-space-lg">
         <UnselectedClassCard
           count={unselected.count}
           totalBatchStudents={unselected.totalBatchStudents}

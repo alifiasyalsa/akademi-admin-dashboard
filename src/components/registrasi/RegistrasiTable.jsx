@@ -29,6 +29,7 @@ const REGISTRASI_COLUMNS = [
   { header: "Email", value: (p) => p.email || "" },
   { header: "Status Pendaftaran", value: (p) => p.regStatusLabel || "Belum Pilih Kelas" },
   { header: "Tipe", value: (p) => p.tipe },
+  { header: "Level", value: (p) => (p.level && p.level !== "-" ? p.level : "") },
   { header: "Kelas Rekomendasi", value: (p) => (p.kelas && p.kelas !== "none" ? p.kelas : "") },
   { header: "Status Reminder", value: (p) => p.statusLabel },
   { header: "Jumlah Pengingat", value: (p) => p.reminderCount ?? 0 },
@@ -84,14 +85,15 @@ export function RegistrasiTable({
         }
       }
 
-      // 4. Filter Pencarian Nama / Nomor HP / Email
+      // 4. Filter Pencarian Nama / Nomor HP / Email / Level
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesName = p.name?.toLowerCase().includes(query);
         const matchesPhone =
           p.phone?.toLowerCase().includes(query) || p.rawPhone?.toLowerCase().includes(query);
         const matchesEmail = p.email?.toLowerCase().includes(query);
-        if (!matchesName && !matchesPhone && !matchesEmail) return false;
+        const matchesLevel = p.level && p.level !== "-" && p.level.toLowerCase().includes(query);
+        if (!matchesName && !matchesPhone && !matchesEmail && !matchesLevel) return false;
       }
 
       return true;
@@ -186,44 +188,46 @@ export function RegistrasiTable({
   return (
     <section className="bg-surface rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Header Aksi Tabel: Terpisah dari baris filter & pencarian */}
-      <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-surface">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+      <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-surface">
+        <div className="min-w-0">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-2">
             <span>Daftar Pendaftar Santri</span>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200">
               {batchLabel}
             </span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="hidden sm:block text-xs text-slate-500 mt-0.5">
             Daftar santri non-confirm (belum memilih kelas, belum bayar, lewat batas, mundur/batal)
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap">
           <button
             type="button"
             onClick={handleExportCsv}
             disabled={filteredParticipants.length === 0}
             title={`Download ${filteredParticipants.length} baris sesuai filter tabel saat ini`}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MaterialIcon name="download" className="text-[18px] text-slate-500" />
-            <span>Download CSV ({filteredParticipants.length})</span>
+            <span className="sm:hidden">CSV ({filteredParticipants.length})</span>
+            <span className="hidden sm:inline">Download CSV ({filteredParticipants.length})</span>
           </button>
           <button
             type="button"
             onClick={onOpenTemplates}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
           >
             <MaterialIcon name="chat" className="text-[18px] text-brand-600" />
-            <span>Pengaturan Template WA</span>
+            <span className="sm:hidden">Template</span>
+            <span className="hidden sm:inline">Pengaturan Template WA</span>
           </button>
         </div>
       </div>
 
       {/* 1. Header Toolbar Filter & Pencarian: 1 Baris Padat & Rapi */}
-      <div className="px-5 py-2.5 flex items-center justify-between gap-3 bg-surface border-b border-slate-200 flex-nowrap overflow-x-auto">
-        <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
+      <div className="px-3 sm:px-5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-surface border-b border-slate-200">
+        <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 border border-slate-200 overflow-x-auto max-w-full">
           {/* Tab Semua Non-Confirm */}
           <button
             type="button"
@@ -374,13 +378,13 @@ export function RegistrasiTable({
         </div>
 
         {/* Kanan: Filter Rekomendasi Kelas, Search Bar & Refresh */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 w-full sm:w-auto sm:shrink-0">
           {/* Dropdown Rekomendasi Kelas */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="appearance-none text-xs pl-2.5 pr-7 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-600 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs max-w-[170px] truncate"
+              className="appearance-none text-xs pl-2.5 pr-7 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-600 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs max-w-[140px] sm:max-w-[170px] truncate"
             >
               {classRecommendations.map((opt) => (
                 <option key={opt.id} value={opt.id}>
@@ -395,7 +399,7 @@ export function RegistrasiTable({
           </div>
 
           {/* Quick Search */}
-          <div className="relative w-44 lg:w-52">
+          <div className="relative flex-1 sm:flex-none sm:w-44 lg:w-52">
             <MaterialIcon
               name="search"
               className="absolute left-2.5 top-2 text-[16px] pointer-events-none text-slate-400"
@@ -422,7 +426,7 @@ export function RegistrasiTable({
       </div>
 
       {/* Filter Tipe: Promoted / Stay / New */}
-      <div className="px-5 pb-2.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto border-b border-slate-200 bg-surface">
+      <div className="px-3 sm:px-5 pb-2.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto border-b border-slate-200 bg-surface">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mr-1 shrink-0">
           Tipe
         </span>
@@ -493,15 +497,16 @@ export function RegistrasiTable({
         </div>
       ) : (
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[840px] text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-600 font-label-sm text-label-sm uppercase tracking-wider border-b border-slate-200">
-                <th className="py-space-md px-space-lg font-semibold">Nama & Kontak</th>
-                <th className="py-space-md px-space-md font-semibold">Status Pendaftaran</th>
+                <th className="py-space-md px-3 sm:px-space-lg font-semibold">Nama & Kontak</th>
+                <th className="py-space-md px-space-md font-semibold whitespace-nowrap">Status Pendaftaran</th>
                 <th className="py-space-md px-space-md font-semibold">Tipe</th>
-                <th className="py-space-md px-space-md font-semibold">Kelas Rekomendasi</th>
-                <th className="py-space-md px-space-md font-semibold">Status Reminder</th>
-                <th className="py-space-md px-space-lg text-right font-semibold">Aksi</th>
+                <th className="py-space-md px-space-md font-semibold whitespace-nowrap">Level</th>
+                <th className="py-space-md px-space-md font-semibold whitespace-nowrap">Kelas Rekomendasi</th>
+                <th className="py-space-md px-space-md font-semibold whitespace-nowrap">Status Reminder</th>
+                <th className="py-space-md px-3 sm:px-space-lg text-right font-semibold">Aksi</th>
               </tr>
             </thead>
             <tbody className={`divide-y divide-slate-100 text-slate-800 font-body-md text-body-md transition-opacity duration-200 ${loading ? "opacity-40" : ""}`}>

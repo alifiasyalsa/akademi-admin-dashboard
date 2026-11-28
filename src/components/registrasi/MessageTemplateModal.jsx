@@ -327,16 +327,17 @@ export function MessageTemplateModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
       <div className="bg-surface w-full max-w-6xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* 1. Header Dialog */}
-        <div className="px-6 py-3.5 flex items-center justify-between border-b border-slate-100 bg-surface">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shadow-xs">
-              <MaterialIcon name="chat" className="text-[22px]" />
+        <div className="px-3 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between gap-2 border-b border-slate-100 bg-surface">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shadow-xs shrink-0">
+              <MaterialIcon name="chat" className="text-[20px] sm:text-[22px]" />
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 leading-tight">
-                Pengaturan Template Pesan WhatsApp
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate">
+                <span className="sm:hidden">Template WA</span>
+                <span className="hidden sm:inline">Pengaturan Template Pesan WhatsApp</span>
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 font-medium truncate">
                 {category === "registrasi" ? "Kategori: Registrasi Santri" : "Kategori: Monitoring Santri"}
               </p>
             </div>
@@ -344,15 +345,15 @@ export function MessageTemplateModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             <MaterialIcon name="close" className="text-[20px]" />
           </button>
         </div>
 
         {/* 2. Segmented Status Tabs */}
-        <div className="px-6 pt-3.5 pb-2.5 bg-slate-50/60 border-b border-slate-100">
-          <div className="inline-flex p-1 rounded-xl bg-slate-200/60 border border-slate-200 gap-1 flex-wrap">
+        <div className="px-3 sm:px-6 pt-3 pb-2.5 bg-slate-50/60 border-b border-slate-100 overflow-x-auto">
+          <div className="inline-flex p-1 rounded-xl bg-slate-200/60 border border-slate-200 gap-1 flex-nowrap sm:flex-wrap min-w-min">
             {statusTabs.map((tab) => {
               const isActive = activeStatusKey === tab.key;
               return (
@@ -664,12 +665,13 @@ export function MessageTemplateModal({
         </div>
 
         {/* 4. Footer Modal */}
-        <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Tersinkronisasi otomatis dengan Cloud Database Supabase</span>
+        <div className="px-3 sm:px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 text-xs text-slate-500">
+          <span className="hidden sm:inline">Tersinkronisasi otomatis dengan Cloud Database Supabase</span>
+          <span className="sm:hidden truncate">Sinkron Supabase</span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg font-semibold bg-slate-200 hover:bg-slate-300 text-slate-800 transition-colors cursor-pointer"
+            className="px-4 py-1.5 rounded-lg font-semibold bg-slate-200 hover:bg-slate-300 text-slate-800 transition-colors cursor-pointer shrink-0"
           >
             Tutup
           </button>

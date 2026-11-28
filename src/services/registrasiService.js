@@ -37,6 +37,18 @@ function toTipe(registrationType) {
   return "Promoted";
 }
 
+/** Level dari class registration CMS (`class_type_name`). */
+function toLevel(register) {
+  const raw =
+    register?.class_type_name ||
+    register?.classTypeName ||
+    register?.class_type?.name ||
+    register?.classType?.name ||
+    "";
+  const level = String(raw).trim();
+  return level || "-";
+}
+
 /** Satu record register CMS + tracking Supabase -> satu baris tabel Registrasi. */
 export function toParticipant(register, reminderLogsMap = null, batchId = null, now = Date.now()) {
   const memberId = String(register.member_id || register.id || "");
@@ -118,6 +130,7 @@ export function toParticipant(register, reminderLogsMap = null, batchId = null, 
     rawPhone: phone,
     email: email || "",
     tipe: toTipe(register.registration_type),
+    level: toLevel(register),
     kelas: register.suggested_class_name || register.selected_class_name || "none",
     regStatus,
     regStatusLabel,

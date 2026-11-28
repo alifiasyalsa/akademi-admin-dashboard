@@ -8,6 +8,7 @@ export function RegistrasiRow({ participant, onActionClick }) {
     phone,
     email,
     tipe,
+    level,
     kelas,
     regStatus,
     regStatusLabel,
@@ -93,7 +94,21 @@ export function RegistrasiRow({ participant, onActionClick }) {
         </span>
       </td>
 
-      {/* 4. Kelas Rekomendasi */}
+      {/* 4. Level (class_type_name) */}
+      <td className="py-space-md px-space-md">
+        {level && level !== "-" ? (
+          <span
+            className="inline-flex items-center font-label-sm text-label-sm font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200"
+            title={level}
+          >
+            {level}
+          </span>
+        ) : (
+          <span className="font-body-sm text-body-sm text-slate-400 italic">-</span>
+        )}
+      </td>
+
+      {/* 5. Kelas Rekomendasi */}
       <td className="py-space-md px-space-md">
         {kelas && kelas !== "none" ? (
           <span className="inline-flex items-center gap-1 font-label-sm text-label-sm font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-700 border border-slate-200">
@@ -107,7 +122,7 @@ export function RegistrasiRow({ participant, onActionClick }) {
         )}
       </td>
 
-      {/* 5. Status Reminder Supabase */}
+      {/* 6. Status Reminder Supabase */}
       <td className="py-space-md px-space-md">
         <div>
           {status === "followup" ? (
@@ -135,7 +150,7 @@ export function RegistrasiRow({ participant, onActionClick }) {
         </div>
       </td>
 
-      {/* 6. Aksi */}
+      {/* 7. Aksi */}
       <td className="py-space-md px-space-lg text-right">
         <div className="inline-flex flex-col items-end gap-1">
           {status === "followup" ? (

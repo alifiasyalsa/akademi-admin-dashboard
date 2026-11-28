@@ -82,16 +82,16 @@ export function ChecklistSelect({
         className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg font-label-md text-label-md font-semibold transition-all shadow-sm border text-left bg-surface hover:bg-slate-50 text-slate-800 border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-surface"
         title={disabled ? disabledTitle : isNoneSelected || isAllSelected ? triggerLabel : selectedLabels.join(", ")}
       >
-        <span className="flex items-center gap-1.5 truncate">
+        <span className="flex items-center gap-1.5 min-w-0 flex-1">
           <MaterialIcon
             name={busy ? "sync" : icon}
-            className={`text-[16px] ${busy ? "text-brand-600 animate-spin" : "text-slate-500"}`}
+            className={`text-[16px] shrink-0 ${busy ? "text-brand-600 animate-spin" : "text-slate-500"}`}
           />
-          <span className="truncate max-w-[240px]">{triggerLabel}</span>
+          <span className="truncate min-w-0">{triggerLabel}</span>
         </span>
         <MaterialIcon
           name={disabled ? "lock" : isOpen ? "expand_less" : "expand_more"}
-          className="text-[18px] text-slate-500"
+          className="text-[18px] text-slate-500 shrink-0"
         />
       </button>
 

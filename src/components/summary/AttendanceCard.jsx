@@ -2,8 +2,8 @@ export function AttendanceCard({ attendance }) {
   const byLevel = attendance?.byLevel || [];
 
   return (
-    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200">
-      <div className="flex items-center justify-between">
+    <div className="rounded-xl p-3 sm:p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200">
+      <div className="flex items-center justify-between gap-2">
         <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-brand-600">
           Partisipasi & Presensi Pekan Ini
         </span>
@@ -13,7 +13,7 @@ export function AttendanceCard({ attendance }) {
       </div>
       <div className="my-space-md flex items-baseline justify-between">
         <div>
-          <span className="font-metric-xl text-metric-xl font-extrabold tracking-tight tabular-nums text-slate-900">
+          <span className="text-[28px] leading-9 sm:font-metric-xl sm:text-metric-xl font-extrabold tracking-tight tabular-nums text-slate-900">
             {attendance.rate}
           </span>
           <span className="font-body-sm text-body-sm ml-1.5 font-medium text-slate-500">tingkat kehadiran</span>
@@ -36,7 +36,7 @@ export function AttendanceCard({ attendance }) {
             />
           ))}
         </div>
-        <div className="flex items-center justify-between font-label-sm text-label-sm pt-1 text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 font-label-sm text-label-sm pt-1 text-slate-600">
           {attendance.legend.map((item) => (
             <span key={item.label} className={`flex items-center gap-1 ${item.textClass}`}>
               <span className={`w-2 h-2 rounded-full ${item.dotClass}`} /> {item.label}

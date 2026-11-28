@@ -19,7 +19,7 @@ export function TablePagination({
   const safePage = Math.min(Math.max(1, currentPage), Math.max(1, totalPages));
 
   return (
-    <div className="px-space-lg py-space-md flex flex-col sm:flex-row items-center justify-between gap-space-md font-label-sm text-label-sm bg-slate-50 border-t border-slate-200 text-slate-500">
+    <div className="px-3 sm:px-space-lg py-3 sm:py-space-md flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-space-md font-label-sm text-label-sm bg-slate-50 border-t border-slate-200 text-slate-500">
       {/* Kiri: Info data & selector ukuran halaman */}
       <div className="flex flex-wrap items-center gap-space-sm">
         <span>

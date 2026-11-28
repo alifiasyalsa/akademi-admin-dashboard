@@ -2,7 +2,7 @@ export function InfaqCard({ infaq }) {
   const byWeek = infaq?.byWeek || [];
 
   return (
-    <div className="rounded-xl p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200">
+    <div className="rounded-xl p-3 sm:p-space-lg shadow-sm flex flex-col justify-between bg-surface border border-slate-200">
       <div className="flex items-center justify-between gap-2">
         <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-brand-600">
           Pemenuhan Infaq Komitmen
@@ -20,7 +20,7 @@ export function InfaqCard({ infaq }) {
       </div>
       <div className="my-space-md flex items-baseline justify-between">
         <div>
-          <span className="font-metric-xl text-metric-xl font-extrabold tracking-tight tabular-nums text-slate-900">
+          <span className="text-[28px] leading-9 sm:font-metric-xl sm:text-metric-xl font-extrabold tracking-tight tabular-nums text-slate-900">
             {infaq.rate}
           </span>
           <span className="font-body-sm text-body-sm ml-1.5 text-slate-500">terkumpul</span>

@@ -76,7 +76,7 @@ export function SearchableSelect({
         }`}
         title={selectedOption ? selectedOption.label : placeholder}
       >
-        <span className="truncate max-w-[240px] xl:max-w-[320px]">
+        <span className="truncate min-w-0 flex-1">
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <MaterialIcon

@@ -107,14 +107,8 @@ export const stitchMock = {
       { week: 4, achieved: 31, total: 40, rate: "78%" },
     ],
   },
-  promoted: {
-    pendingCount: 9,
-    totalLabel: "34 Anggota",
-    chosenWidth: "73.5%",
-    pendingWidth: "26.5%",
-    chosenLabel: "25 Telah Memilih",
-    followUpLabel: "9 Butuh Follow-Up",
-  },
+  // Kartu Promoted & Konversi hanya untuk desain awal; live CMS set null
+  promoted: null,
   table: {
     selectedWeek: "4",
     totalRegistered: 42,

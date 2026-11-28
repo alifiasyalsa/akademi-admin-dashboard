@@ -122,16 +122,16 @@ export function ManualInfaqHistoryModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-surface rounded-2xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center">
-              <MaterialIcon name="receipt_long" className="text-[22px]" />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-surface rounded-t-2xl sm:rounded-2xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 max-h-[92vh] sm:max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center shrink-0">
+              <MaterialIcon name="receipt_long" className="text-[20px] sm:text-[22px]" />
             </div>
-            <div>
-              <h3 className="font-headline-sm text-headline-sm font-bold text-slate-900">Riwayat Infaq Manual</h3>
-              <p className="font-body-sm text-body-sm text-slate-500">
+            <div className="min-w-0">
+              <h3 className="font-headline-sm text-headline-sm font-bold text-slate-900 truncate">Riwayat Infaq Manual</h3>
+              <p className="font-body-sm text-body-sm text-slate-500 truncate">
                 {scopeLabel} • hingga 500 transaksi terbaru
               </p>
             </div>

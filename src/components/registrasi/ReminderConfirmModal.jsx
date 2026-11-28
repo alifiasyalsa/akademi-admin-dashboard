@@ -12,8 +12,8 @@ export function ReminderConfirmModal({
   const previewMessage = `Assalamu'alaikum Kak ${participant.name}, selamat telah lulus evaluasi! Silakan tentukan jadwal kelas ${batchLabel} pilihanmu di link quranbest.id/pilih-kelas sebelum kuota habis.`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-surface rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 transform transition-all">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-surface rounded-t-2xl sm:rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-slate-200 transform transition-all">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">

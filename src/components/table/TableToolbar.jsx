@@ -13,15 +13,15 @@ export function TableToolbar({
 }) {
   return (
     <div className="bg-surface border-b border-slate-200">
-      <div className="px-5 py-2.5 flex items-center justify-between gap-3 flex-nowrap overflow-x-auto">
-        <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
+      <div className="px-3 sm:px-5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
+        <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 border border-slate-200 overflow-x-auto max-w-full">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
             return (
               <button
                 key={tab.id}
                 type="button"
-                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                className={`px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                   isActive
                     ? "bg-brand-200 text-slate-900 shadow-xs"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
@@ -42,8 +42,8 @@ export function TableToolbar({
             );
           })}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="relative w-48 lg:w-56">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none sm:w-48 lg:w-56">
             <MaterialIcon name="search" className="absolute left-2.5 top-2 text-[16px] pointer-events-none text-slate-400" />
             <input
               className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400"
@@ -64,7 +64,7 @@ export function TableToolbar({
         </div>
       </div>
       {subTabs.length > 0 && (
-        <div className="px-5 pb-2.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto">
+        <div className="px-3 sm:px-5 pb-2.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto">
           {subTabs.map((sub) => {
             const isActive = sub.id === activeSubTab;
             return (

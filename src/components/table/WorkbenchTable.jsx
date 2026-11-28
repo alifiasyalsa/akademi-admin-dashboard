@@ -168,15 +168,15 @@ export function WorkbenchTable({
   return (
     <section className="bg-surface rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Header Aksi Tabel: Terpisah dari baris filter & pencarian */}
-      <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-surface">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+      <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-surface">
+        <div className="min-w-0">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-2">
             <span>Workbench Santri &amp; Presensi</span>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
               Pekan {weekLabel}
             </span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="hidden sm:block text-xs text-slate-500 mt-0.5">
             Daftar santri, historis presensi 8 pekan, status validasi infaq, dan tindakan WA
           </p>
           {table.notice && (
@@ -187,35 +187,38 @@ export function WorkbenchTable({
           )}
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap">
           <button
             type="button"
             onClick={handleExportCsv}
             disabled={visibleStudents.length === 0}
             title={`Download ${visibleStudents.length} baris sesuai filter tabel saat ini`}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MaterialIcon name="download" className="text-[18px] text-slate-500" />
-            <span>Download CSV ({visibleStudents.length})</span>
+            <span className="sm:hidden">CSV ({visibleStudents.length})</span>
+            <span className="hidden sm:inline">Download CSV ({visibleStudents.length})</span>
           </button>
           {onOpenManualInfaqHistory && (
             <button
               type="button"
               onClick={onOpenManualInfaqHistory}
               title="Lihat riwayat input infaq manual"
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-surface hover:bg-slate-50 border border-slate-300 shadow-2xs transition-all active:scale-95 cursor-pointer"
             >
               <MaterialIcon name="receipt_long" className="text-[18px] text-slate-500" />
-              <span>Riwayat Infaq Manual</span>
+              <span className="sm:hidden">Riwayat</span>
+              <span className="hidden sm:inline">Riwayat Infaq Manual</span>
             </button>
           )}
           <button
             type="button"
             onClick={onOpenTemplates}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
           >
             <MaterialIcon name="chat" className="text-[18px] text-brand-600" />
-            <span>Pengaturan Template WA</span>
+            <span className="sm:hidden">Template</span>
+            <span className="hidden sm:inline">Pengaturan Template WA</span>
           </button>
         </div>
       </div>
@@ -233,19 +236,19 @@ export function WorkbenchTable({
       />
 
       <div className="overflow-x-auto w-full">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[920px] text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 text-slate-600 font-label-sm text-label-sm uppercase tracking-wider border-b border-slate-200">
-              <th className="py-space-md px-space-lg font-semibold">Nama & Kontak</th>
-              <th className="py-space-md px-space-md font-semibold">Presensi Pekan {weekLabel}</th>
+              <th className="py-space-md px-3 sm:px-space-lg font-semibold">Nama & Kontak</th>
+              <th className="py-space-md px-space-md font-semibold whitespace-nowrap">Presensi Pekan {weekLabel}</th>
               <th className="py-space-md px-space-md font-semibold">Hari</th>
-              <th className="py-space-md px-space-md font-semibold">Historis (8 Pk)</th>
+              <th className="py-space-md px-space-md font-semibold whitespace-nowrap">Historis (8 Pk)</th>
               <th className="py-space-md px-space-md text-right font-semibold">Kewajiban</th>
               <SortableHeader label="Valid Masuk" sortKey="valid" sortConfig={sortConfig} onToggle={toggleSort} />
-              <th className="py-space-md px-space-md font-semibold" title="Tanggal pengingat terakhir & total berapa kali dihubungi">
+              <th className="py-space-md px-space-md font-semibold whitespace-nowrap" title="Tanggal pengingat terakhir & total berapa kali dihubungi">
                 Follow-up (Terakhir · Total)
               </th>
-              <th className="py-space-md px-space-lg text-right font-semibold">Tindakan WA Mandiri</th>
+              <th className="py-space-md px-3 sm:px-space-lg text-right font-semibold whitespace-nowrap">Tindakan WA Mandiri</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-800 font-body-md text-body-md">
