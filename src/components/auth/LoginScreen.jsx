@@ -84,7 +84,7 @@ export function LoginScreen({ onSignIn, onSignUp, initialError = null }) {
       <ThemeToggle showLabel={false} className="absolute top-4 right-4" />
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-space-md mb-6">
-          <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(178,58,112,0.3)]">
+          <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(148,82,118,0.28)]">
             <MaterialIcon name="menu_book" className="text-[22px]" />
           </div>
           <div>

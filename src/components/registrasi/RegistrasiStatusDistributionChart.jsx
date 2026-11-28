@@ -44,7 +44,7 @@ export function RegistrasiStatusDistributionChart({
       label: "Belum Pilih Kelas",
       sublabel: "Status Wait",
       count: waitCount,
-      color: "#b23a70", // brand-600
+      color: "#945276", // brand-600 soft dusty rose (lebih tua)
       lightBg: "bg-brand-50",
       textColor: "text-brand-600",
       borderColor: "border-brand-200",

@@ -6,7 +6,7 @@ export function AppHeader({ header, onOpenActivity, onOpenRoles, onSignOut }) {
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_1px_4px_rgba(15,23,42,0.04)] pt-[env(safe-area-inset-top)]">
       <div className="h-14 sm:h-16 w-full px-3 sm:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-2 sm:gap-space-lg">
         <div className="flex items-center gap-2 sm:gap-space-md min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(178,58,112,0.3)] shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(148,82,118,0.28)] shrink-0">
             <MaterialIcon name="menu_book" className="text-[18px] sm:text-[20px]" />
           </div>
           <div className="min-w-0">
